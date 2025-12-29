@@ -1,228 +1,316 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mystic Oracle Tarot</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- React and Babel for browser compilation -->
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600&family=Inter:wght@400;600&display=swap');
+import React, { useState, useEffect, useMemo } from 'react';
+import { 
+  Sparkles, 
+  Moon, 
+  Sun, 
+  RotateCcw, 
+  BookOpen, 
+  User, 
+  ChevronRight, 
+  Loader2,
+  RefreshCw
+} from 'lucide-react';
+
+const apiKey = ""; // Runtime provided
+
+// --- Tarot Deck Data ---
+const TAROT_DECK = [
+  { name: "The Fool", image: "🃏", meaning: "New beginnings, optimism, trust in life." },
+  { name: "The Magician", image: "🪄", meaning: "Action, power, manifestation, resourcefulness." },
+  { name: "The High Priestess", image: "🌙", meaning: "Intuition, sacred knowledge, the subconscious mind." },
+  { name: "The Empress", image: "🌿", meaning: "Femininity, beauty, nature, nurturing, abundance." },
+  { name: "The Emperor", image: "👑", meaning: "Authority, structure, a father figure, foundation." },
+  { name: "The Hierophant", image: "⛪", meaning: "Spiritual wisdom, religious beliefs, tradition." },
+  { name: "The Lovers", image: "❤️", meaning: "Love, harmony, relationships, values alignment." },
+  { name: "The Chariot", image: "🏇", meaning: "Control, willpower, victory, determination." },
+  { name: "Strength", image: "🦁", meaning: "Strength, courage, persuasion, influence, compassion." },
+  { name: "The Hermit", image: "🕯️", meaning: "Soul-searching, introspection, being alone, inner guidance." },
+  { name: "Wheel of Fortune", image: "🎡", meaning: "Good luck, karma, life cycles, destiny, a turning point." },
+  { name: "Justice", image: "⚖️", meaning: "Justice, fairness, truth, cause and effect, law." },
+  { name: "The Hanged Man", image: "🦶", meaning: "Pause, surrender, letting go, new perspectives." },
+  { name: "Death", image: "💀", meaning: "Endings, change, transformation, transition." },
+  { name: "Temperance", image: "🍷", meaning: "Balance, moderation, patience, purpose." },
+  { name: "The Devil", image: "😈", meaning: "Shadow self, attachment, addiction, restriction." },
+  { name: "The Tower", image: "🏰", meaning: "Sudden change, upheaval, chaos, revelation." },
+  { name: "The Star", image: "⭐", meaning: "Hope, faith, purpose, renewal, spirituality." },
+  { name: "The Moon", image: "🌕", meaning: "Illusion, fear, anxiety, subconscious, intuition." },
+  { name: "The Sun", image: "🌞", meaning: "Positivity, fun, warmth, success, vitality." },
+  { name: "Judgement", image: "🎺", meaning: "Judgement, rebirth, inner calling, absolution." },
+  { name: "The World", image: "🌍", meaning: "Completion, integration, accomplishment, travel." }
+];
+
+const ZODIAC_SIGNS = [
+  "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", 
+  "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"
+];
+
+// --- Components ---
+
+const Card = ({ card, isFlipped, onClick, index }) => {
+  return (
+    <div 
+      onClick={onClick}
+      className={`relative w-24 h-36 md:w-32 md:h-48 cursor-pointer transition-all duration-700 transform preserve-3d ${isFlipped ? 'rotate-y-180' : ''}`}
+      style={{ perspective: '1000px' }}
+    >
+      {/* Back of Card */}
+      <div className={`absolute inset-0 bg-indigo-950 rounded-xl border-2 border-amber-400/30 flex items-center justify-center shadow-lg backface-hidden ${isFlipped ? 'hidden' : 'block'}`}>
+        <div className="text-amber-500 opacity-50 flex flex-col items-center">
+          <Moon size={32} />
+          <div className="text-[8px] mt-2 uppercase tracking-widest font-serif">Mystic</div>
+        </div>
+      </div>
+      
+      {/* Front of Card */}
+      <div className={`absolute inset-0 bg-white rounded-xl border-2 border-amber-500 flex flex-col items-center justify-center p-2 shadow-xl backface-hidden rotate-y-180 ${isFlipped ? 'block' : 'hidden'}`}>
+        <div className="text-4xl mb-2">{card?.image}</div>
+        <div className="text-indigo-900 font-serif font-bold text-center text-xs md:text-sm">{card?.name}</div>
+      </div>
+    </div>
+  );
+};
+
+export default function App() {
+  const [selectedSign, setSelectedSign] = useState(null);
+  const [step, setStep] = useState('sign-selection'); // 'sign-selection', 'shuffling', 'reading'
+  const [drawnCards, setDrawnCards] = useState([]);
+  const [readingText, setReadingText] = useState("");
+  const [isLoadingReading, setIsLoadingReading] = useState(false);
+  const [deck, setDeck] = useState([...TAROT_DECK]);
+
+  const shuffleDeck = () => {
+    const newDeck = [...TAROT_DECK].sort(() => Math.random() - 0.5);
+    setDeck(newDeck);
+    setDrawnCards([]);
+    setReadingText("");
+  };
+
+  const handleDrawCard = (index) => {
+    if (drawnCards.length >= 3) return;
+    const card = deck[index];
+    if (drawnCards.find(c => c.name === card.name)) return;
+    
+    setDrawnCards(prev => [...prev, card]);
+  };
+
+  const autoDraw = () => {
+    const shuffled = [...TAROT_DECK].sort(() => Math.random() - 0.5);
+    setDrawnCards(shuffled.slice(0, 3));
+  };
+
+  const generateReading = async () => {
+    if (drawnCards.length < 3) return;
+    setIsLoadingReading(true);
+    setStep('interpretation');
+
+    const prompt = `Give a spiritual tarot reading for a ${selectedSign} individual. 
+    They have drawn these three cards:
+    1. Past: ${drawnCards[0].name}
+    2. Present: ${drawnCards[1].name}
+    3. Future: ${drawnCards[2].name}
+    
+    Format the response as a cohesive story relating their zodiac sign's traits to these cards. Keep it under 200 words.`;
+
+    try {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+      });
+      const data = await response.json();
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      setReadingText(text || "The stars are silent right now. Try again soon.");
+    } catch (error) {
+      setReadingText("Connectivity issues with the spiritual realm. Please check your signal.");
+    } finally {
+      setIsLoadingReading(false);
+    }
+  };
+
+  const reset = () => {
+    setStep('sign-selection');
+    setDrawnCards([]);
+    setReadingText("");
+    setSelectedSign(null);
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-amber-500/30">
+      {/* Background Ambience */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-900/20 blur-[120px] rounded-full"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-900/20 blur-[120px] rounded-full"></div>
+      </div>
+
+      <header className="relative z-10 p-6 flex items-center justify-between border-b border-white/10 backdrop-blur-md sticky top-0">
+        <div className="flex items-center gap-2">
+          <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/20">
+            <Sparkles className="text-white" size={20} />
+          </div>
+          <h1 className="text-xl font-serif font-bold tracking-tight">Stellar Tarot</h1>
+        </div>
+        {selectedSign && (
+          <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/10">
+            <User size={14} className="text-amber-400" />
+            <span className="text-xs font-medium uppercase tracking-widest">{selectedSign}</span>
+          </div>
+        )}
+      </header>
+
+      <main className="relative z-10 max-w-4xl mx-auto p-6 pb-24">
         
-        body { font-family: 'Inter', sans-serif; background-color: #020617; color: #f8fafc; margin: 0; }
-        .font-serif { font-family: 'Crimson Pro', serif; }
-        
-        /* Perspective for card flips */
-        .perspective-1000 { perspective: 1000px; }
-        .preserve-3d { transform-style: preserve-3d; }
-        .backface-hidden { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
-        .rotate-y-180 { transform: rotateY(180deg); }
-        
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        @keyframes bounce-subtle {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-5px); }
-        }
-        .animate-bounce-subtle { animation: bounce-subtle 3s ease-in-out infinite; }
-    </style>
-</head>
-<body>
-    <div id="root"></div>
+        {/* Step 1: Sign Selection */}
+        {step === 'sign-selection' && (
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="text-center space-y-2">
+              <h2 className="text-3xl font-serif">Welcome, seeker</h2>
+              <p className="text-slate-400">Select your zodiac sign to align the cards with your energy.</p>
+            </div>
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+              {ZODIAC_SIGNS.map(sign => (
+                <button
+                  key={sign}
+                  onClick={() => { setSelectedSign(sign); setStep('shuffling'); }}
+                  className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-amber-500/50 hover:bg-white/10 transition-all text-sm font-medium flex flex-col items-center gap-2 active:scale-95"
+                >
+                  <Sun size={18} className="text-amber-500" />
+                  {sign}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
-    <script type="text/babel">
-        const { useState, useEffect } = React;
+        {/* Step 2: Shuffling and Drawing */}
+        {step === 'shuffling' && (
+          <div className="space-y-8 animate-in fade-in duration-500">
+            <div className="flex justify-between items-end">
+              <div>
+                <h2 className="text-2xl font-serif">Draw Your Path</h2>
+                <p className="text-slate-400 text-sm">Select 3 cards for Past, Present, and Future.</p>
+              </div>
+              <button 
+                onClick={autoDraw}
+                className="flex items-center gap-2 text-amber-400 text-sm font-medium hover:underline"
+              >
+                <RefreshCw size={14} /> Auto-Draw
+              </button>
+            </div>
 
-        // --- IMPORTANT: REPLACE THESE WITH YOUR KEYS ---
-        const myFirebaseConfig = {
-            apiKey: "YOUR_FIREBASE_API_KEY",
-            authDomain: "YOUR_PROJECT.firebaseapp.com",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_PROJECT.appspot.com",
-            messagingSenderId: "YOUR_SENDER_ID",
-            appId: "YOUR_APP_ID"
-        };
-        const GEMINI_API_KEY = "YOUR_GOOGLE_AI_STUDIO_API_KEY";
-        // -----------------------------------------------
-
-        // Fallback for environment variables (Canvas compatibility)
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : myFirebaseConfig;
-        const apiKey = typeof __api_key !== 'undefined' ? __api_key : GEMINI_API_KEY;
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'mystic-tarot-personal';
-
-        const TAROT_DECK = [
-            "The Fool", "The Magician", "The High Priestess", "The Empress", "The Emperor", "The Hierophant", "The Lovers", "The Chariot", "Strength", "The Hermit", "Wheel of Fortune", "Justice", "The Hanged Man", "Death", "Temperance", "The Devil", "The Tower", "The Star", "The Moon", "The Sun", "Judgement", "The World",
-            "Ace of Cups", "Two of Cups", "Three of Cups", "Four of Cups", "Five of Cups", "Six of Cups", "Seven of Cups", "Eight of Cups", "Nine of Cups", "Ten of Cups", "Page of Cups", "Knight of Cups", "Queen of Cups", "King of Cups",
-            "Ace of Pentacles", "Two of Pentacles", "Three of Pentacles", "Four of Pentacles", "Five of Pentacles", "Six of Pentacles", "Seven of Pentacles", "Eight of Pentacles", "Nine of Pentacles", "Ten of Pentacles", "Page of Pentacles", "Knight of Pentacles", "Queen of Pentacles", "King of Pentacles",
-            "Ace of Swords", "Two of Swords", "Three of Swords", "Four of Swords", "Five of Swords", "Six of Swords", "Seven of Swords", "Eight of Swords", "Nine of Swords", "Ten of Swords", "Page of Swords", "Knight of Swords", "Queen of Swords", "King of Swords",
-            "Ace of Wands", "Two of Wands", "Three of Wands", "Four of Wands", "Five of Wands", "Six of Wands", "Seven of Wands", "Eight of Wands", "Nine of Wands", "Ten of Wands", "Page of Wands", "Knight of Wands", "Queen of Wands", "King of Wands"
-        ];
-
-        // Custom Icon Component using Inline SVGs for reliability
-        const Icon = ({ name, className }) => {
-            const icons = {
-                Moon: (
-                    <svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
-                    </svg>
-                ),
-                Sun: (
-                    <svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>
-                    </svg>
-                ),
-                Sparkles: (
-                    <svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/>
-                    </svg>
-                ),
-                ChevronLeft: (
-                    <svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="m15 18-6-6 6-6"/>
-                    </svg>
-                ),
-                BookOpen: (
-                    <svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
-                    </svg>
-                ),
-                Loader2: (
-                    <svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
-                    </svg>
-                )
-            };
-            return icons[name] || null;
-        };
-
-        const App = () => {
-            const [view, setView] = useState('home');
-            const [drawnCards, setDrawnCards] = useState([]);
-            const [reading, setReading] = useState(null);
-            const [isGenerating, setIsGenerating] = useState(false);
-            const [revealedCount, setRevealedCount] = useState(0);
-
-            const handleDrawCards = () => {
-                const shuffled = [...TAROT_DECK].sort(() => 0.5 - Math.random());
-                const selected = shuffled.slice(0, 3).map(name => ({
-                    name,
-                    isReversed: Math.random() > 0.5,
-                    revealed: false
-                }));
-                setDrawnCards(selected);
-                setRevealedCount(0);
-                setReading(null);
-                setView('draw');
-            };
-
-            const revealCard = (index) => {
-                if (drawnCards[index].revealed) return;
-                const newCards = [...drawnCards];
-                newCards[index].revealed = true;
-                setDrawnCards(newCards);
-                setRevealedCount(prev => prev + 1);
-            };
-
-            const generateReading = async () => {
-                if (!apiKey || apiKey.includes("YOUR_")) {
-                    setReading("Missing API Key. Please add your Google AI Studio key to the code.");
-                    return;
-                }
-                setIsGenerating(true);
-                const cardNames = drawnCards.map(c => `${c.name}${c.isReversed ? ' (Reversed)' : ''}`).join(', ');
-                const prompt = `Interpret these tarot cards for growth: ${cardNames}. Provide 3 short paragraphs. Be mystical yet encouraging.`;
-
-                try {
-                    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-                    });
-                    const data = await res.json();
-                    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                    setReading(text || "The stars are silent. Try again.");
-                } catch (e) {
-                    setReading("Connection to the cosmos failed. Check your API key.");
-                } finally {
-                    setIsGenerating(false);
-                }
-            };
-
-            const LandingView = () => (
-                <div className="flex flex-col items-center justify-center min-h-screen p-6 text-center">
-                    <div className="mb-8 p-6 rounded-full bg-indigo-500/10 border border-indigo-500/20 shadow-xl">
-                        <Icon name="Moon" className="w-16 h-16 text-indigo-400 animate-pulse" />
-                    </div>
-                    <h1 className="text-4xl font-serif mb-2">Mystic Oracle</h1>
-                    <p className="text-slate-400 mb-12 max-w-xs">A personal gateway to your inner wisdom.</p>
-                    <button onClick={handleDrawCards} className="w-full max-w-xs py-4 bg-indigo-600 rounded-2xl font-semibold shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all">
-                        <Icon name="Sparkles" className="w-5 h-5 text-indigo-200" /> Draw Cards
-                    </button>
-                </div>
-            );
-
-            const DrawView = () => (
-                <div className="min-h-screen p-6 pt-12 pb-24">
-                    <button onClick={() => setView('home')} className="mb-8 flex items-center text-slate-400 gap-1 active:opacity-50">
-                        <Icon name="ChevronLeft" className="w-5 h-5" /> Back
-                    </button>
-                    
-                    <div className="flex flex-col gap-6 items-center">
-                        {drawnCards.map((card, idx) => (
-                            <div key={idx} onClick={() => revealCard(idx)} className="relative w-full max-w-[280px] h-44 cursor-pointer perspective-1000">
-                                <div className={`relative w-full h-full transition-all duration-700 preserve-3d ${card.revealed ? '[transform:rotateY(180deg)]' : ''}`}>
-                                    {/* Card Back */}
-                                    <div className="absolute inset-0 bg-slate-900 border-2 border-indigo-900/50 rounded-2xl flex items-center justify-center backface-hidden shadow-xl">
-                                        <Icon name="Moon" className="w-12 h-12 text-indigo-500/20" />
-                                    </div>
-                                    {/* Card Front */}
-                                    <div className="absolute inset-0 bg-slate-800 border-2 border-amber-500/30 rounded-2xl p-4 flex flex-col items-center justify-center backface-hidden [transform:rotateY(180deg)] shadow-xl">
-                                        <div className={card.isReversed ? 'rotate-180' : ''}>
-                                            <Icon name="Sun" className="w-8 h-8 text-amber-400 mb-2" />
-                                            <div className="text-lg font-serif text-amber-100 text-center leading-tight">{card.name}</div>
-                                            {card.isReversed && <div className="text-[10px] text-amber-500/60 uppercase tracking-widest text-center mt-1">Reversed</div>}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-
-                    {revealedCount === 3 && (
-                        <div className="mt-12 w-full max-w-md mx-auto">
-                            {!reading ? (
-                                <button onClick={generateReading} disabled={isGenerating} className="w-full py-4 bg-amber-600 rounded-full font-bold flex items-center justify-center gap-2 animate-bounce-subtle shadow-lg shadow-amber-900/20">
-                                    {isGenerating ? <Icon name="Loader2" className="w-5 h-5 animate-spin" /> : <Icon name="Sparkles" className="w-5 h-5" />}
-                                    Consult the Oracle
-                                </button>
-                            ) : (
-                                <div className="bg-slate-900/50 p-6 rounded-3xl border border-slate-800 backdrop-blur-sm">
-                                    <h3 className="text-amber-400 font-serif mb-4 flex items-center gap-2"><Icon name="BookOpen" className="w-5 h-5" /> Insight</h3>
-                                    <div className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap italic">
-                                        {reading}
-                                    </div>
-                                    <button onClick={handleDrawCards} className="mt-8 w-full py-2 text-slate-500 text-[10px] uppercase tracking-[0.2em] border-t border-slate-800 pt-4 active:text-slate-300">Start New Journey</button>
-                                </div>
-                            )}
-                        </div>
+            {/* Selected Cards Display */}
+            <div className="flex justify-center gap-4 min-h-[160px] md:min-h-[220px]">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="flex flex-col items-center gap-2">
+                  <div className="w-24 h-36 md:w-32 md:h-48 rounded-xl border-2 border-dashed border-white/10 flex items-center justify-center">
+                    {drawnCards[i] ? (
+                      <div className="bg-white rounded-lg p-2 text-indigo-900 w-full h-full flex flex-col items-center justify-center animate-in zoom-in-95 duration-300 shadow-xl border-2 border-amber-500">
+                        <span className="text-4xl">{drawnCards[i].image}</span>
+                        <span className="text-[10px] uppercase font-bold text-center mt-2 leading-tight">{drawnCards[i].name}</span>
+                      </div>
+                    ) : (
+                      <span className="text-white/20 text-[10px] uppercase tracking-tighter">
+                        {i === 0 ? "Past" : i === 1 ? "Present" : "Future"}
+                      </span>
                     )}
+                  </div>
                 </div>
-            );
+              ))}
+            </div>
 
-            return (
-                <div className="max-w-md mx-auto min-h-screen bg-slate-950 overflow-x-hidden">
-                    {view === 'home' ? <LandingView /> : <DrawView />}
+            {/* Deck to draw from */}
+            {drawnCards.length < 3 ? (
+              <div className="relative h-48 flex items-center justify-center overflow-x-auto py-4">
+                <div className="flex -space-x-12 px-12">
+                  {[...Array(12)].map((_, i) => (
+                    <div 
+                      key={i}
+                      onClick={() => handleDrawCard(i)}
+                      className="w-24 h-36 md:w-32 md:h-48 bg-indigo-950 rounded-xl border border-amber-400/30 shadow-2xl hover:-translate-y-4 transition-transform cursor-pointer flex-shrink-0 flex items-center justify-center"
+                      style={{ transform: `rotate(${(i - 6) * 2}deg)` }}
+                    >
+                      <Moon className="text-amber-500/20" size={24} />
+                    </div>
+                  ))}
                 </div>
-            );
-        };
+              </div>
+            ) : (
+              <div className="flex justify-center pt-8">
+                <button
+                  onClick={generateReading}
+                  className="bg-gradient-to-r from-amber-500 to-orange-600 text-white px-12 py-4 rounded-full font-bold shadow-xl shadow-amber-500/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-3"
+                >
+                  <BookOpen size={20} />
+                  Reveal Meaning
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
-</body>
-</html>
+        {/* Step 3: Interpretation */}
+        {step === 'interpretation' && (
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-1000">
+            <div className="text-center space-y-2">
+              <span className="text-amber-500 text-xs font-bold uppercase tracking-widest">Divine Guidance for {selectedSign}</span>
+              <h2 className="text-3xl font-serif">The Reading</h2>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3 md:gap-6">
+              {drawnCards.map((card, i) => (
+                <div key={i} className="bg-white/5 rounded-2xl p-4 border border-white/10 text-center space-y-2">
+                  <div className="text-xs text-amber-500 font-bold uppercase">
+                    {i === 0 ? "Past" : i === 1 ? "Present" : "Future"}
+                  </div>
+                  <div className="text-3xl">{card.image}</div>
+                  <div className="text-sm font-serif font-bold">{card.name}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="bg-white/5 backdrop-blur-md rounded-3xl p-6 md:p-10 border border-white/10 shadow-inner relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-4 text-white/5">
+                <Sparkles size={120} />
+              </div>
+              
+              {isLoadingReading ? (
+                <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                  <Loader2 className="animate-spin text-amber-500" size={40} />
+                  <p className="text-slate-400 animate-pulse font-serif italic text-lg text-center">Consulting the cosmos for your {selectedSign} alignment...</p>
+                </div>
+              ) : (
+                <div className="space-y-6 relative z-10">
+                  <p className="text-slate-200 leading-relaxed text-lg font-serif first-letter:text-4xl first-letter:font-bold first-letter:text-amber-500 first-letter:mr-1 first-letter:float-left">
+                    {readingText}
+                  </p>
+                  <div className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent w-full"></div>
+                  <div className="flex justify-between items-center">
+                    <button 
+                      onClick={reset}
+                      className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
+                    >
+                      <RotateCcw size={16} />
+                      <span className="text-sm">Start New Reading</span>
+                    </button>
+                    <div className="flex gap-2">
+                       <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+                       <div className="w-2 h-2 rounded-full bg-amber-500/50"></div>
+                       <div className="w-2 h-2 rounded-full bg-amber-500/20"></div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+      </main>
+
+      {/* Style overrides for card flip animation */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        .preserve-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+      `}} />
+    </div>
+  );
+}
