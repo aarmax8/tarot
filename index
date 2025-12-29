@@ -4,284 +4,270 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Tarot Oracle</title>
-    <!-- Tailwind CSS for modern utility styling -->
-    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* CRITICAL CSS: Ensures the app looks like an iPhone app even before scripts load */
-        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&display=swap');
-        
+        /* --- NATIVE SYSTEM STYLING (No External Libraries) --- */
         :root {
             --ios-blue: #007aff;
             --ios-bg: #000000;
-            --ios-secondary: #1c1c1e;
+            --ios-card: #1c1c1e;
+            --ios-text: #ffffff;
+            --ios-gray: #8e8e93;
+            --gold: #ffd700;
         }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
         body {
             background-color: var(--ios-bg);
-            color: #ffffff;
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+            color: var(--ios-text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             margin: 0;
             padding: 0;
+            overflow: hidden;
             user-select: none;
-            -webkit-tap-highlight-color: transparent;
-            overflow: hidden; 
         }
 
-        .font-mystic { font-family: 'Cinzel', serif; }
+        /* Layout */
+        #app { height: 100vh; display: flex; flex-direction: column; position: relative; }
 
-        /* iPhone Blur Header/Footer */
-        .ios-glass {
-            background: rgba(25, 25, 25, 0.85);
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
+        header {
+            position: fixed; top: 0; width: 100%; z-index: 50;
+            background: rgba(28, 28, 30, 0.8);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-bottom: 0.5px solid rgba(255, 255, 255, 0.1);
+            padding: 55px 20px 15px 20px; text-align: center;
         }
 
-        #app-container {
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            position: relative;
+        header h1 { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -0.4px; }
+
+        main { flex: 1; overflow-y: auto; padding: 110px 20px 150px 20px; }
+
+        /* Navigation */
+        nav {
+            position: fixed; bottom: 0; width: 100%; z-index: 50;
+            background: rgba(28, 28, 30, 0.8);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-top: 0.5px solid rgba(255, 255, 255, 0.1);
+            display: flex; justify-content: space-around;
+            padding: 10px 20px 35px 20px;
         }
 
-        .app-content {
-            flex: 1;
-            overflow-y: auto;
-            padding-bottom: 140px; /* Space for the bottom bar */
-            -webkit-overflow-scrolling: touch;
-        }
+        .tab { display: flex; flex-direction: column; align-items: center; color: var(--ios-gray); text-decoration: none; font-size: 10px; font-weight: 500; cursor: pointer; }
+        .tab.active { color: var(--ios-blue); }
+        .tab-icon { font-size: 24px; margin-bottom: 4px; }
 
-        /* iOS Transitions */
-        @keyframes slideIn {
-            from { transform: translateY(20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
-        .animate-ios { animation: slideIn 0.4s cubic-bezier(0.1, 0.9, 0.2, 1) forwards; }
+        /* Home View */
+        .hero { display: flex; flex-direction: column; align-items: center; text-align: center; padding-top: 40px; animation: fadeIn 0.4s ease; }
+        .app-icon { width: 90px; height: 90px; background: linear-gradient(135deg, #f59e0b, #fbbf24); border-radius: 20px; display: flex; items-center; justify-content: center; font-size: 50px; margin-bottom: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); line-height: 90px; }
+        .hero h2 { font-size: 34px; margin: 0 0 10px 0; letter-spacing: -1px; }
+        .hero p { color: var(--ios-gray); font-size: 17px; line-height: 1.3; padding: 0 20px; margin-bottom: 40px; }
         
-        .reversed { transform: rotate(180deg); }
+        .btn { 
+            background: var(--ios-blue); color: white; border: none; width: 100%; max-width: 300px;
+            height: 50px; border-radius: 12px; font-size: 17px; font-weight: 600; cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .btn:active { opacity: 0.6; }
 
-        /* Navigation Styling */
-        .tab-active { color: var(--ios-blue) !important; }
-        .tab-active svg { stroke: var(--ios-blue); }
+        /* Reading View */
+        .spread { display: flex; flex-direction: column; gap: 40px; align-items: center; padding-bottom: 50px; }
+        .spread-item { text-align: center; width: 100%; animation: slideUp 0.5s ease backwards; }
+        .label { font-size: 11px; font-weight: 700; color: var(--gold); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 15px; opacity: 0.7; }
         
-        /* Bottom Sheet UI */
-        .bottom-sheet {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: #1c1c1e;
-            border-top-left-radius: 20px;
-            border-top-right-radius: 20px;
-            z-index: 100;
-            transform: translateY(100%);
-            transition: transform 0.4s cubic-bezier(0.1, 0.9, 0.2, 1);
-            padding: 20px 20px 60px 20px;
-            box-shadow: 0 -10px 40px rgba(0,0,0,0.8);
+        .card {
+            width: 200px; height: 310px; background: linear-gradient(145deg, #2c2c2e, #1c1c1e);
+            border-radius: 18px; border: 1px solid rgba(255,255,255,0.1);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            margin: 0 auto; box-shadow: 0 20px 40px rgba(0,0,0,0.6); position: relative;
         }
+        .card.reversed { transform: rotate(180deg); }
+        .card-emoji { font-size: 70px; margin-bottom: 20px; }
+        .card-name { font-size: 18px; font-weight: 700; color: #ffd700; padding: 0 15px; }
 
-        .bottom-sheet.active { transform: translateY(0); }
+        .meaning { margin-top: 20px; font-size: 15px; color: var(--ios-gray); font-style: italic; line-height: 1.4; padding: 0 30px; }
 
-        .handle {
-            width: 36px;
-            height: 5px;
-            background: #3a3a3c;
-            border-radius: 3px;
-            margin: 0 auto 24px auto;
+        /* Deck View */
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .grid-item { background: var(--ios-card); border-radius: 12px; aspect-ratio: 2/3; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 0.5px solid rgba(255,255,255,0.05); }
+        .grid-item span { font-size: 24px; margin-bottom: 4px; }
+        .grid-item small { font-size: 8px; text-transform: uppercase; color: var(--ios-gray); text-align: center; padding: 0 4px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; width: 100%; }
+
+        /* Bottom Sheet */
+        #overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 90; display: none; }
+        #sheet {
+            position: fixed; bottom: 0; left: 0; right: 0; background: #1c1c1e;
+            border-radius: 20px 20px 0 0; z-index: 100; padding: 20px;
+            transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.1, 0.9, 0.2, 1);
+            padding-bottom: 60px; text-align: center;
         }
+        #sheet.active { transform: translateY(0); }
+        .handle { width: 36px; height: 5px; background: #3a3a3c; border-radius: 3px; margin: 0 auto 20px auto; }
 
-        /* Haptic feedback simulation */
-        .haptic:active {
-            transform: scale(0.96);
-            opacity: 0.8;
-        }
+        /* Animations */
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <div id="app-container">
-        <!-- iPhone Status Bar/Header Area -->
-        <header class="ios-glass fixed top-0 w-full z-40 border-b border-white/5 pt-14 pb-4 px-6">
-            <h1 id="view-title" class="text-center font-bold text-[17px] tracking-tight">Oracle</h1>
+    <div id="app">
+        <header>
+            <h1 id="view-title">Oracle</h1>
         </header>
 
-        <!-- Dynamic Content Area -->
-        <main id="app-content" class="app-content pt-32 px-5"></main>
+        <main id="main-content"></main>
 
-        <!-- Native Bottom Tab Bar -->
-        <nav class="ios-glass fixed bottom-0 w-full border-t border-white/5 pb-10 pt-3 px-10 flex justify-between items-center z-40">
-            <div onclick="ui.render('home')" id="nav-home" class="flex flex-col items-center gap-1 text-[#8e8e93] cursor-pointer haptic">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
-                <span class="text-[10px] font-bold">Home</span>
+        <nav>
+            <div class="tab active" id="tab-home" onclick="app.nav('home')">
+                <span class="tab-icon">✨</span>
+                <span>Home</span>
             </div>
-            <div onclick="ui.render('reading')" id="nav-reading" class="flex flex-col items-center gap-1 text-[#8e8e93] cursor-pointer haptic">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg>
-                <span class="text-[10px] font-bold">Reading</span>
+            <div class="tab" id="tab-reading" onclick="app.nav('reading')">
+                <span class="tab-icon">🔮</span>
+                <span>Reading</span>
             </div>
-            <div onclick="ui.render('deck')" id="nav-deck" class="flex flex-col items-center gap-1 text-[#8e8e93] cursor-pointer haptic">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-                <span class="text-[10px] font-bold">Library</span>
+            <div class="tab" id="tab-deck" onclick="app.nav('deck')">
+                <span class="tab-icon">📖</span>
+                <span>Library</span>
             </div>
         </nav>
     </div>
 
-    <!-- iOS Modal System -->
-    <div id="overlay" class="fixed inset-0 bg-black/70 z-[90] hidden" onclick="ui.closeModal()"></div>
-    <div id="sheet" class="bottom-sheet">
+    <!-- Modal Details -->
+    <div id="overlay" onclick="app.close()"></div>
+    <div id="sheet">
         <div class="handle"></div>
-        <div id="sheet-inner" class="animate-ios"></div>
+        <div id="sheet-body"></div>
     </div>
 
     <script>
-        // --- DATA ---
-        const CARDS = [
-            { id: 0, name: "The Fool", icon: "🃏", up: "New beginnings, optimism, trust.", rev: "Recklessness, risk-taking, folly." },
-            { id: 1, name: "Magician", icon: "🪄", up: "Power, manifestation, resourcefulness.", rev: "Manipulation, poor planning." },
-            { id: 2, name: "High Priestess", icon: "🌙", up: "Intuition, sacred knowledge.", rev: "Secrets, disconnected intuition." },
-            { id: 3, name: "The Empress", icon: "🌿", up: "Nature, abundance, femininity.", rev: "Creative block, dependence." },
-            { id: 4, name: "The Emperor", icon: "👑", up: "Authority, structure, foundation.", rev: "Domination, rigidity." },
-            { id: 5, name: "Hierophant", icon: "🏛️", up: "Tradition, conformity, wisdom.", rev: "Personal beliefs, challenging status." },
-            { id: 6, name: "The Lovers", icon: "❤️", up: "Love, harmony, choices.", rev: "Self-love, disharmony." },
-            { id: 7, name: "The Chariot", icon: "⚔️", up: "Direction, control, victory.", rev: "Lack of control, aggression." },
-            { id: 8, name: "Strength", icon: "🦁", up: "Courage, persuasion, influence.", rev: "Self-doubt, low energy." },
-            { id: 9, name: "The Hermit", icon: "🏮", up: "Soul-searching, introspection.", rev: "Isolation, withdrawal." },
-            { id: 10, name: "Wheel of Fortune", icon: "🎡", up: "Good luck, karma, destiny.", rev: "Bad luck, resistance to change." },
-            { id: 11, name: "Justice", icon: "⚖️", up: "Truth, fairness, cause/effect.", rev: "Unfairness, lack of accountability." },
-            { id: 12, name: "Hanged Man", icon: "👣", up: "Pause, surrender, perspective.", rev: "Delays, resistance." },
-            { id: 13, name: "Death", icon: "💀", up: "Endings, transformation.", rev: "Resistance to change." },
-            { id: 14, name: "Temperance", icon: "🍷", up: "Balance, moderation, patience.", rev: "Imbalance, excess." },
-            { id: 15, name: "The Devil", icon: "🔥", up: "Attachment, shadow self.", rev: "Releasing limiting beliefs." },
-            { id: 16, name: "The Tower", icon: "⚡", up: "Sudden upheaval, revelation.", rev: "Averting disaster." },
-            { id: 17, name: "The Star", icon: "✨", up: "Hope, faith, renewal.", rev: "Despair, lack of faith." },
-            { id: 18, name: "The Moon", icon: "🌒", up: "Fear, illusion, subconscious.", rev: "Release of fear." },
-            { id: 19, name: "The Sun", icon: "☀️", up: "Positivity, fun, warmth.", rev: "Inner child, sadness." },
-            { id: 20, name: "Judgement", icon: "🎺", up: "Rebirth, inner calling.", rev: "Self-criticism, doubt." },
-            { id: 21, name: "The World", icon: "🌍", up: "Completion, accomplishment.", rev: "Seeking closure." }
+        // --- ALL DATA INLINED ---
+        const DECK = [
+            { id: 0, n: "The Fool", i: "🃏", u: "New beginnings, optimism.", r: "Recklessness, folly." },
+            { id: 1, n: "Magician", i: "🪄", u: "Manifestation, power.", r: "Manipulation, poor planning." },
+            { id: 2, n: "Priestess", i: "🌙", u: "Intuition, subconscious.", r: "Secrets, withdrawal." },
+            { id: 3, n: "Empress", i: "🌿", u: "Abundance, nature.", r: "Dependence, block." },
+            { id: 4, n: "Emperor", i: "👑", u: "Authority, structure.", r: "Rigidity, domination." },
+            { id: 5, n: "Hierophant", i: "🏛️", u: "Tradition, wisdom.", r: "Challenging status quo." },
+            { id: 6, n: "Lovers", i: "❤️", u: "Harmony, choices.", r: "Self-love, disharmony." },
+            { id: 7, n: "Chariot", i: "⚔️", u: "Victory, control.", r: "Aggression, lack of will." },
+            { id: 8, n: "Strength", i: "🦁", u: "Courage, influence.", r: "Self-doubt, low energy." },
+            { id: 9, n: "Hermit", i: "🏮", u: "Introspection, soul-searching.", r: "Loneliness, withdrawal." },
+            { id: 10, n: "Fortune", i: "🎡", u: "Good luck, destiny.", r: "Bad luck, resistance." },
+            { id: 11, n: "Justice", i: "⚖️", u: "Truth, cause and effect.", r: "Unfairness, dishonesty." },
+            { id: 12, n: "Hanged Man", i: "👣", u: "Pause, surrender.", r: "Stalling, resistance." },
+            { id: 13, n: "Death", i: "💀", u: "Endings, change.", r: "Resistance to change." },
+            { id: 14, n: "Temperance", i: "🍷", u: "Balance, patience.", r: "Imbalance, excess." },
+            { id: 15, name: "The Devil", i: "🔥", u: "Shadow self, attachment.", r: "Detachment, release." },
+            { id: 16, n: "The Tower", i: "⚡", u: "Sudden upheaval.", r: "Averting disaster." },
+            { id: 17, n: "The Star", i: "✨", u: "Hope, renewal.", r: "Despair, lack of faith." },
+            { id: 18, n: "The Moon", i: "🌒", u: "Fear, subconscious.", r: "Release of fear." },
+            { id: 19, n: "The Sun", i: "☀️", u: "Vitality, fun.", r: "Inner child, sadness." },
+            { id: 20, n: "Judgement", i: "🎺", u: "Rebirth, calling.", r: "Self-doubt, doubt." },
+            { id: 21, n: "The World", i: "🌍", u: "Completion, travel.", r: "Seeking closure." }
         ];
 
-        // Generate Minor Arcana
-        ["Wands", "Cups", "Swords", "Pentacles"].forEach((s, si) => {
-            ["Ace", "2", "3", "4", "5", "6", "7", "8", "9", "10", "Page", "Knight", "Queen", "King"].forEach((r, ri) => {
-                CARDS.push({ id: 22+(si*14)+ri, name: `${r} of ${s}`, icon: si===0?"🔥":si===1?"💧":si===2?"💨":"⛰️", up: `Creative ${s} energy flowing.`, rev: `Blocked ${s} energy.` });
-            });
-        });
-
-        // --- APP UI ENGINE ---
-        const ui = {
+        const app = {
             view: 'home',
             spread: [],
 
-            render(view) {
-                this.view = view;
-                const root = document.getElementById('app-content');
+            init() {
+                this.nav('home');
+            },
+
+            nav(v) {
+                this.view = v;
+                const content = document.getElementById('main-content');
                 const title = document.getElementById('view-title');
                 
-                // Active Nav
-                document.querySelectorAll('nav div').forEach(el => el.classList.remove('tab-active'));
-                const activeNav = document.getElementById(`nav-${view}`);
-                if(activeNav) activeNav.classList.add('tab-active');
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.getElementById('tab-'+v).classList.add('active');
 
-                root.innerHTML = '';
-                
-                if (view === 'home') {
+                if (v === 'home') {
                     title.innerText = 'Oracle';
-                    root.innerHTML = `
-                        <div class="flex flex-col items-center pt-10 text-center animate-ios">
-                            <div class="w-24 h-24 bg-gradient-to-tr from-amber-500 to-amber-200 rounded-[24px] shadow-2xl flex items-center justify-center mb-10">
-                                <span class="text-5xl">🔮</span>
-                            </div>
-                            <h2 class="text-4xl font-mystic font-bold mb-4 tracking-tight">Daily Oracle</h2>
-                            <p class="text-[#8e8e93] px-10 text-[16px] mb-12 leading-snug">Tap into your intuition. Consult the universe for guidance on your path today.</p>
-                            <button onclick="ui.draw()" class="w-full h-14 bg-[#007aff] rounded-2xl font-bold text-[17px] active:opacity-60 transition-all haptic shadow-lg">Start New Reading</button>
-                            <div class="mt-12 opacity-10">
-                                <div class="flex gap-4">
-                                    <div class="w-10 h-16 border-2 border-white rounded-lg -rotate-12"></div>
-                                    <div class="w-10 h-16 border-2 border-white rounded-lg translate-y-[-10px]"></div>
-                                    <div class="w-10 h-16 border-2 border-white rounded-lg rotate-12"></div>
-                                </div>
-                            </div>
+                    content.innerHTML = `
+                        <div class="hero">
+                            <div class="app-icon">🔮</div>
+                            <h2>Daily Oracle</h2>
+                            <p>Unlock the secrets of the universe. Your journey into the unknown begins with a single card.</p>
+                            <button class="btn" onclick="app.draw()">Get Reading</button>
                         </div>
                     `;
-                } else if (view === 'reading') {
+                } else if (v === 'reading') {
                     title.innerText = 'Reading';
                     if (this.spread.length === 0) {
-                        root.innerHTML = `<div class="pt-40 text-center text-[#8e8e93] animate-ios">No active reading.<br/><span onclick="ui.draw()" class="text-[#007aff] font-bold mt-4 block haptic">Shuffle & Draw</span></div>`;
+                        content.innerHTML = `<div class="hero" style="padding-top:100px"><p>No reading active.</p><button class="btn" onclick="app.draw()">Draw Now</button></div>`;
                     } else {
-                        root.innerHTML = `<div class="space-y-12 pb-10">
+                        content.innerHTML = `<div class="spread">
                             ${this.spread.map((c, i) => `
-                                <div class="flex flex-col items-center animate-ios" style="animation-delay: ${i*0.1}s">
-                                    <span class="text-[10px] uppercase font-bold text-amber-500/50 tracking-[3px] mb-4">${['The Past', 'The Present', 'The Future'][i]}</span>
-                                    <div onclick="ui.openModal(${c.id}, ${c.rev})" class="w-52 h-80 bg-gradient-to-br from-[#2c2c2e] to-[#1c1c1e] rounded-3xl border border-white/10 shadow-2xl flex flex-col items-center justify-center p-6 haptic transition-transform ${c.rev ? 'reversed' : ''}">
-                                        <div class="text-7xl mb-6">${c.icon}</div>
-                                        <h3 class="font-mystic text-amber-100 text-xl font-bold leading-tight">${c.name}</h3>
-                                        <div class="mt-4 w-8 h-1 bg-white/10 rounded-full"></div>
+                                <div class="spread-item" style="animation-delay: ${i*0.15}s">
+                                    <div class="label">${['Past', 'Present', 'Future'][i]}</div>
+                                    <div class="card ${c.r ? 'reversed' : ''}" onclick="app.open(${c.id}, ${c.r})">
+                                        <div class="card-emoji">${c.i}</div>
+                                        <div class="card-name">${c.n}</div>
                                     </div>
-                                    <p class="mt-6 px-12 text-center text-[15px] text-[#8e8e93] italic leading-relaxed">"${c.rev ? c.rev : c.up}"</p>
+                                    <div class="meaning">"${c.r ? c.meaningR : c.meaningU}"</div>
                                 </div>
                             `).join('')}
-                            <div class="pt-6 flex justify-center">
-                                <button onclick="ui.draw()" class="text-[13px] font-bold text-amber-500/60 uppercase tracking-widest border border-white/10 px-6 py-2 rounded-full haptic">Clear & Redraw</button>
-                            </div>
+                            <button class="btn" style="background:#2c2c2e; margin-top:20px" onclick="app.draw()">New Reading</button>
                         </div>`;
                     }
-                } else if (view === 'deck') {
-                    title.innerText = 'The Deck';
-                    root.innerHTML = `<div class="grid grid-cols-3 gap-3 animate-ios">
-                        ${CARDS.map(c => `<div onclick="ui.openModal(${c.id}, false)" class="aspect-[2/3] bg-[#1c1c1e] rounded-2xl border border-white/5 flex flex-col items-center justify-center p-2 haptic transition-all">
-                            <span class="text-3xl mb-1">${c.icon}</span>
-                            <span class="text-[9px] font-bold uppercase text-[#8e8e93] truncate w-full text-center px-1">${c.name}</span>
-                        </div>`).join('')}
-                    </div>`;
+                } else if (v === 'deck') {
+                    title.innerText = 'The Library';
+                    content.innerHTML = `<div class="grid">${DECK.map(c => `<div class="grid-item" onclick="app.open(${c.id}, false)"><span>${c.i}</span><small>${c.n}</small></div>`).join('')}</div>`;
                 }
             },
 
             draw() {
-                this.spread = [...CARDS]
+                this.spread = [...DECK]
                     .sort(() => Math.random() - 0.5)
                     .slice(0, 3)
                     .map(c => ({
                         ...c,
-                        rev: Math.random() > 0.7
+                        r: Math.random() > 0.7,
+                        meaningU: c.u,
+                        meaningR: c.r
                     }));
-                this.render('reading');
+                this.nav('reading');
             },
 
-            openModal(id, isRev) {
-                const card = CARDS.find(c => c.id === id);
-                const inner = document.getElementById('sheet-inner');
-                inner.innerHTML = `
-                    <div class="flex flex-col items-center">
-                        <div class="w-36 h-56 bg-gradient-to-b from-[#3a3a3c] to-[#1c1c1e] rounded-2xl flex flex-col items-center justify-center border border-white/20 mb-10 ${isRev ? 'reversed' : ''}">
-                            <span class="text-5xl mb-3">${card.icon}</span>
-                            <span class="text-xs font-mystic text-amber-200 font-bold">${card.name}</span>
+            open(id, isRev) {
+                const c = DECK.find(x => x.id === id);
+                const body = document.getElementById('sheet-body');
+                body.innerHTML = `
+                    <div style="margin-bottom:30px">
+                        <div class="card ${isRev ? 'reversed' : ''}" style="width:140px; height:220px; margin-bottom:20px">
+                            <div style="font-size:50px">${c.i}</div>
+                            <div style="font-size:14px; font-weight:bold; color:#ffd700">${c.n}</div>
                         </div>
-                        <div class="w-full space-y-8">
-                            <div>
-                                <h4 class="text-[#007aff] text-[12px] font-bold uppercase tracking-widest mb-3">Upright Meaning</h4>
-                                <p class="text-[18px] leading-tight text-white font-medium">"${card.up}"</p>
-                            </div>
-                            <div class="pt-6 border-t border-white/5">
-                                <h4 class="text-[#ff3b30] text-[12px] font-bold uppercase tracking-widest mb-3">Reversed Meaning</h4>
-                                <p class="text-[18px] leading-tight text-white font-medium">"${card.rev}"</p>
-                            </div>
-                        </div>
-                        <button onclick="ui.closeModal()" class="w-full mt-12 h-14 bg-[#3a3a3c] rounded-2xl font-bold text-[17px] text-white active:bg-white active:text-black transition-all">Done</button>
+                        <h3 style="margin:0; font-size:20px">${c.n} ${isRev ? '(Reversed)' : ''}</h3>
                     </div>
+                    <div style="text-align:left; gap:20px; display:flex; flex-direction:column">
+                        <div>
+                            <div style="color:var(--ios-blue); font-size:11px; font-weight:bold; text-transform:uppercase; margin-bottom:4px">Upright</div>
+                            <p style="margin:0; font-size:16px; color:#fff">"${c.u}"</p>
+                        </div>
+                        <div style="padding-top:15px; border-top:1px solid rgba(255,255,255,0.05)">
+                            <div style="color:#ff3b30; font-size:11px; font-weight:bold; text-transform:uppercase; margin-bottom:4px">Reversed</div>
+                            <p style="margin:0; font-size:16px; color:#fff">"${c.r}"</p>
+                        </div>
+                    </div>
+                    <button class="btn" style="background:#3a3a3c; margin-top:40px" onclick="app.close()">Dismiss</button>
                 `;
-                document.getElementById('overlay').classList.remove('hidden');
+                document.getElementById('overlay').style.display = 'block';
                 document.getElementById('sheet').classList.add('active');
             },
 
-            closeModal() {
-                document.getElementById('overlay').classList.add('hidden');
+            close() {
+                document.getElementById('overlay').style.display = 'none';
                 document.getElementById('sheet').classList.remove('active');
             }
         };
 
-        // Initialize immediately when DOM is ready
-        document.addEventListener('DOMContentLoaded', () => {
-            ui.render('home');
-        });
+        // Start app immediately
+        window.addEventListener('DOMContentLoaded', () => app.init());
     </script>
 </body>
 </html>
