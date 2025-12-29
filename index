@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Tarot Oracle</title>
-    <!-- Tailwind CSS CDN -->
+    <!-- Tailwind CSS - Provides the professional UI framework -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&display=swap');
@@ -17,57 +17,49 @@
         body {
             background-color: var(--ios-bg);
             color: #ffffff;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Icons", "Helvetica Neue", Helvetica, Arial, sans-serif;
             margin: 0;
             padding: 0;
             user-select: none;
             -webkit-tap-highlight-color: transparent;
-            overflow: hidden; /* Prevent body scroll, use app-scroll container */
+            overflow: hidden; 
         }
 
         .font-mystic { font-family: 'Cinzel', serif; }
 
-        /* iOS Background Blur */
+        /* Glassmorphism Effect */
         .glass {
-            background: rgba(20, 20, 20, 0.7);
+            background: rgba(28, 28, 30, 0.8);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
         }
 
-        /* App Container */
         #app-container {
             height: 100vh;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
         }
 
-        /* Scroll Area */
         .app-content {
             flex: 1;
             overflow-y: auto;
-            padding-bottom: 100px; /* Space for tab bar */
+            padding-bottom: 120px;
             -webkit-overflow-scrolling: touch;
         }
 
         /* Animations */
-        @keyframes slideUp {
-            from { transform: translateY(100%); }
-            to { transform: translateY(0); }
+        @keyframes ios-slide-up {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .animate-slide-up { animation: slideUp 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
-        .animate-fade { animation: fadeIn 0.3s ease-out forwards; }
-
-        /* Card Reversal */
+        .animate-ios { animation: ios-slide-up 0.5s cubic-bezier(0.1, 0.9, 0.2, 1) forwards; }
+        
         .reversed { transform: rotate(180deg); }
 
-        /* iPhone Bottom Sheet */
+        /* iPhone UI Elements */
+        .tab-active { color: var(--ios-blue) !important; }
+        
         .bottom-sheet {
             position: fixed;
             bottom: 0;
@@ -77,270 +69,195 @@
             border-top-left-radius: 20px;
             border-top-right-radius: 20px;
             z-index: 100;
-            max-height: 90vh;
-            overflow-y: auto;
             transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(0.1, 0.9, 0.2, 1);
+            padding: 20px;
+            padding-bottom: 60px;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
         }
 
-        .bottom-sheet.active {
-            transform: translateY(0);
-            transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
-        }
+        .bottom-sheet.active { transform: translateY(0); }
 
-        .sheet-handle {
-            width: 40px;
+        .handle {
+            width: 36px;
             height: 5px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 5px;
-            margin: 12px auto;
+            background: #3a3a3c;
+            border-radius: 3px;
+            margin: 0 auto 20px auto;
         }
-
-        /* Navigation Tab Items */
-        .tab-item.active { color: var(--ios-blue); }
-        .tab-item.active svg { stroke: var(--ios-blue); }
     </style>
 </head>
 <body>
 
     <div id="app-container">
         <!-- iOS Header -->
-        <header class="glass fixed top-0 w-full z-40 border-b border-white/10 pt-12 pb-3 px-6">
-            <h1 id="view-title" class="text-center font-semibold text-lg">Oracle</h1>
+        <header class="glass fixed top-0 w-full z-40 border-b border-white/10 pt-12 pb-4 px-6">
+            <h1 id="view-title" class="text-center font-bold text-[17px] tracking-tight">Oracle</h1>
         </header>
 
         <!-- Main Content -->
-        <main id="app-content" class="app-content pt-28 px-4"></main>
+        <main id="app-content" class="app-content pt-28 px-5"></main>
 
-        <!-- Bottom Tab Bar -->
-        <nav class="glass fixed bottom-0 w-full border-t border-white/10 pb-8 pt-3 px-8 flex justify-between items-center z-40">
-            <button onclick="router.go('home')" id="tab-home" class="tab-item flex flex-col items-center gap-1 text-slate-400 active:scale-90 transition-transform">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <!-- iOS Bottom Tab Bar -->
+        <nav class="glass fixed bottom-0 w-full border-t border-white/5 pb-10 pt-3 px-10 flex justify-between items-center z-40">
+            <div onclick="ui.render('home')" id="nav-home" class="flex flex-col items-center gap-1 text-[#8e8e93] cursor-pointer active:opacity-50 transition-opacity">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
                 <span class="text-[10px] font-medium">Home</span>
-            </button>
-            <button onclick="router.go('reading')" id="tab-reading" class="tab-item flex flex-col items-center gap-1 text-slate-400 active:scale-90 transition-transform">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+            </div>
+            <div onclick="ui.render('reading')" id="nav-reading" class="flex flex-col items-center gap-1 text-[#8e8e93] cursor-pointer active:opacity-50 transition-opacity">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg>
                 <span class="text-[10px] font-medium">Reading</span>
-            </button>
-            <button onclick="router.go('deck')" id="tab-deck" class="tab-item flex flex-col items-center gap-1 text-slate-400 active:scale-90 transition-transform">
+            </div>
+            <div onclick="ui.render('deck')" id="nav-deck" class="flex flex-col items-center gap-1 text-[#8e8e93] cursor-pointer active:opacity-50 transition-opacity">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
                 <span class="text-[10px] font-medium">Library</span>
-            </button>
+            </div>
         </nav>
     </div>
 
-    <!-- Bottom Sheet Modal -->
-    <div id="modal-overlay" class="fixed inset-0 bg-black/60 z-[90] hidden animate-fade" onclick="router.closeDetail()"></div>
-    <div id="bottom-sheet" class="bottom-sheet shadow-2xl">
-        <div class="sheet-handle"></div>
-        <div id="sheet-content" class="px-6 pb-12"></div>
+    <!-- Modal System -->
+    <div id="overlay" class="fixed inset-0 bg-black/60 z-[90] hidden" onclick="ui.closeModal()"></div>
+    <div id="sheet" class="bottom-sheet">
+        <div class="handle"></div>
+        <div id="sheet-inner"></div>
     </div>
 
     <script>
-        const TAROT_DECK = [
-            { id: 0, name: "The Fool", arcana: "Major", img: "🃏", upright: "New beginnings, optimism, trust in life.", reversed: "Recklessness, risk-taking, consideration." },
-            { id: 1, name: "The Magician", arcana: "Major", img: "🪄", upright: "Action, power, manifestation.", reversed: "Manipulation, poor planning, untapped talents." },
-            { id: 2, name: "The High Priestess", arcana: "Major", img: "🌙", upright: "Intuition, sacred knowledge, subconscious mind.", reversed: "Secrets, disconnected from intuition, withdrawal." },
-            { id: 3, name: "The Empress", arcana: "Major", img: "🌿", upright: "Femininity, beauty, nature, abundance.", reversed: "Creative block, dependence on others." },
-            { id: 4, name: "The Emperor", arcana: "Major", img: "👑", upright: "Authority, establishment, structure.", reversed: "Domination, excessive control, rigidity." },
-            { id: 5, name: "The Hierophant", arcana: "Major", img: "🏛️", upright: "Spiritual wisdom, religious beliefs, tradition.", reversed: "Personal beliefs, freedom, challenging the status quo." },
-            { id: 6, name: "The Lovers", arcana: "Major", img: "❤️", upright: "Love, harmony, relationships, choices.", reversed: "Self-love, disharmony, imbalance, misalignment." },
-            { id: 7, name: "The Chariot", arcana: "Major", img: "⚔️", upright: "Control, willpower, success, action.", reversed: "Self-discipline, opposition, lack of direction." },
-            { id: 8, name: "Strength", arcana: "Major", img: "🦁", upright: "Strength, courage, persuasion, influence.", reversed: "Inner strength, self-doubt, low energy." },
-            { id: 9, name: "The Hermit", arcana: "Major", img: "🏮", upright: "Soul-searching, introspection, being alone.", reversed: "Isolation, loneliness, withdrawal." },
-            { id: 10, name: "Wheel of Fortune", arcana: "Major", img: "🎡", upright: "Good luck, karma, life cycles, destiny.", reversed: "Bad luck, resistance to change, breaking cycles." },
-            { id: 11, name: "Justice", arcana: "Major", img: "⚖️", upright: "Justice, fairness, truth, cause and effect.", reversed: "Unfairness, lack of accountability, dishonesty." },
-            { id: 12, name: "The Hanged Man", arcana: "Major", img: "👣", upright: "Pause, surrender, letting go, new perspectives.", reversed: "Delays, resistance, stalling, indecision." },
-            { id: 13, name: "Death", arcana: "Major", img: "💀", upright: "Endings, change, transformation, transition.", reversed: "Resistance to change, personal transformation, inner purging." },
-            { id: 14, name: "Temperance", arcana: "Major", img: "🍷", upright: "Balance, moderation, patience, purpose.", reversed: "Imbalance, excess, self-healing, re-alignment." },
-            { id: 15, name: "The Devil", arcana: "Major", img: "🔥", upright: "Shadow self, attachment, addiction, restriction.", reversed: "Releasing limiting beliefs, exploring dark thoughts, detachment." },
-            { id: 16, name: "The Tower", arcana: "Major", img: "⚡", upright: "Sudden change, upheaval, chaos, revelation.", reversed: "Personal transformation, fear of change, averting disaster." },
-            { id: 17, name: "The Star", arcana: "Major", img: "✨", upright: "Hope, faith, purpose, renewal, spirituality.", reversed: "Lack of faith, despair, self-trust, disconnection." },
-            { id: 18, name: "The Moon", arcana: "Major", img: "🌒", upright: "Illusion, fear, anxiety, subconscious, intuition.", reversed: "Release of fear, repressed emotion, inner confusion." },
-            { id: 19, name: "The Sun", arcana: "Major", img: "☀️", upright: "Positivity, fun, warmth, success, vitality.", reversed: "Inner child, feeling down, overly optimistic." },
-            { id: 20, name: "Judgement", arcana: "Major", img: "🎺", upright: "Judgement, rebirth, inner calling, absolution.", reversed: "Self-doubt, inner-critic, ignoring the call." },
-            { id: 21, name: "The World", arcana: "Major", img: "🌍", upright: "Completion, integration, accomplishment, travel.", reversed: "Seeking personal closure, short-cuts, delays." }
+        // --- DATA ENGINE ---
+        const CARDS = [
+            { id: 0, name: "The Fool", arc: "Major", icon: "🃏", up: "New beginnings, optimism, trust.", rev: "Recklessness, risk-taking, folly." },
+            { id: 1, name: "The Magician", arc: "Major", icon: "🪄", up: "Power, manifestation, resourcefulness.", rev: "Manipulation, poor planning, untapped talent." },
+            { id: 2, name: "The High Priestess", arc: "Major", icon: "🌙", up: "Intuition, sacred knowledge, subconscious.", rev: "Secrets, disconnected from intuition." },
+            { id: 3, name: "The Empress", arc: "Major", icon: "🌿", up: "Nature, abundance, femininity.", rev: "Creative block, dependence." },
+            { id: 4, name: "The Emperor", arc: "Major", icon: "👑", up: "Authority, structure, solid foundation.", rev: "Domination, rigidity, coldness." },
+            { id: 5, name: "The Hierophant", arc: "Major", icon: "🏛️", up: "Tradition, conformity, spiritual wisdom.", rev: "Personal beliefs, challenging status quo." },
+            { id: 6, name: "The Lovers", arc: "Major", icon: "❤️", up: "Love, harmony, choices, alignment.", rev: "Self-love, disharmony, misalignment." },
+            { id: 7, name: "The Chariot", arc: "Major", icon: "⚔️", up: "Direction, control, victory, will.", rev: "Lack of control, aggression, self-discipline." },
+            { id: 8, name: "Strength", arc: "Major", icon: "🦁", up: "Courage, persuasion, influence.", rev: "Inner strength, self-doubt, low energy." },
+            { id: 9, name: "The Hermit", arc: "Major", icon: "🏮", up: "Soul-searching, introspection, guidance.", rev: "Isolation, loneliness, withdrawal." },
+            { id: 10, name: "Wheel of Fortune", arc: "Major", icon: "🎡", up: "Good luck, karma, destiny, turning point.", rev: "Bad luck, resistance to change." },
+            { id: 11, name: "Justice", arc: "Major", icon: "⚖️", up: "Truth, fairness, cause and effect.", rev: "Unfairness, lack of accountability." },
+            { id: 12, name: "The Hanged Man", arc: "Major", icon: "👣", up: "Pause, surrender, new perspective.", rev: "Delays, resistance, stalling." },
+            { id: 13, name: "Death", arc: "Major", icon: "💀", up: "Endings, change, transformation.", rev: "Resistance to change, personal transition." },
+            { id: 14, name: "Temperance", arc: "Major", icon: "🍷", up: "Balance, moderation, patience.", rev: "Imbalance, excess, self-healing." },
+            { id: 15, name: "The Devil", arc: "Major", icon: "🔥", up: "Attachment, addiction, shadow self.", rev: "Releasing limiting beliefs, detachment." },
+            { id: 16, name: "The Tower", arc: "Major", icon: "⚡", up: "Sudden change, upheaval, revelation.", rev: "Personal transformation, averting disaster." },
+            { id: 17, name: "The Star", arc: "Major", icon: "✨", up: "Hope, faith, renewal, purpose.", rev: "Lack of faith, despair, self-trust." },
+            { id: 18, name: "The Moon", arc: "Major", icon: "🌒", up: "Fear, anxiety, illusion, subconscious.", rev: "Release of fear, repressed emotion." },
+            { id: 19, name: "The Sun", arc: "Major", icon: "☀️", up: "Positivity, fun, warmth, vitality.", rev: "Inner child, feeling down." },
+            { id: 20, name: "Judgement", arc: "Major", icon: "🎺", up: "Judgement, rebirth, inner calling.", rev: "Self-doubt, inner critic." },
+            { id: 21, name: "The World", arc: "Major", icon: "🌍", up: "Completion, accomplishment, travel.", rev: "Seeking closure, short-cuts." }
         ];
 
-        // Minor Arcana Generator
-        ["Wands", "Cups", "Swords", "Pentacles"].forEach((suit, suitIdx) => {
-            ["Ace", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Page", "Knight", "Queen", "King"].forEach((rank, rankIdx) => {
-                TAROT_DECK.push({
-                    id: 22 + (suitIdx * 14) + rankIdx,
-                    name: `${rank} of ${suit}`,
-                    arcana: "Minor",
-                    suit: suit,
-                    img: suit === "Wands" ? "🔥" : suit === "Cups" ? "💧" : suit === "Swords" ? "💨" : "⛰️",
-                    upright: `${rank} of ${suit} represents active ${suit.toLowerCase()} energy.`,
-                    reversed: `Reversed ${rank} of ${suit} suggests internal or blocked ${suit.toLowerCase()} matters.`
-                });
+        // Minor Arcana Generation
+        ["Wands", "Cups", "Swords", "Pentacles"].forEach((s, si) => {
+            ["Ace", "2", "3", "4", "5", "6", "7", "8", "9", "10", "Page", "Knight", "Queen", "King"].forEach((r, ri) => {
+                CARDS.push({ id: 22+(si*14)+ri, name: `${r} of ${s}`, arc: "Minor", icon: "✨", up: `Positive ${s.toLowerCase()} energy.`, rev: `Internal ${s.toLowerCase()} struggle.` });
             });
         });
 
-        const router = {
-            view: 'home',
+        // --- APP ENGINE ---
+        const ui = {
+            current: 'home',
             spread: [],
 
-            go(view) {
-                this.view = view;
-                this.render();
-            },
-
-            render() {
-                const content = document.getElementById('app-content');
+            render(view) {
+                this.current = view;
+                const root = document.getElementById('app-content');
                 const title = document.getElementById('view-title');
                 
-                // Update Tabs
-                document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
-                document.getElementById(`tab-${this.view}`).classList.add('active');
+                // Active nav state
+                document.querySelectorAll('nav div').forEach(el => el.classList.remove('tab-active'));
+                document.getElementById(`nav-${view}`).classList.add('tab-active');
 
-                content.innerHTML = '';
-                
-                if (this.view === 'home') {
+                root.innerHTML = '';
+                if (view === 'home') {
                     title.innerText = 'Oracle';
-                    content.appendChild(this.getHomeView());
-                } else if (this.view === 'reading') {
-                    title.innerText = 'Daily Reading';
-                    content.appendChild(this.getReadingView());
-                } else if (this.view === 'deck') {
-                    title.innerText = 'Library';
-                    content.appendChild(this.getDeckView());
-                }
-            },
-
-            getHomeView() {
-                const div = document.createElement('div');
-                div.className = 'flex flex-col items-center justify-center pt-8 text-center space-y-8 animate-fade';
-                div.innerHTML = `
-                    <div class="w-24 h-24 bg-gradient-to-tr from-amber-500 to-amber-200 rounded-3xl shadow-lg flex items-center justify-center mb-4">
-                        <span class="text-5xl">🌙</span>
-                    </div>
-                    <h2 class="text-4xl font-mystic font-bold bg-clip-text text-transparent bg-gradient-to-b from-white to-white/40">
-                        The Sacred <br/> Oracle
-                    </h2>
-                    <p class="text-slate-400 px-6 text-sm leading-relaxed">
-                        Access ancient wisdom at your fingertips. Discover your daily path through the 78 keys of the Tarot.
-                    </p>
-                    <button onclick="router.drawSpread()" class="w-full max-w-xs py-4 bg-[#007aff] text-white rounded-2xl font-semibold shadow-lg active:scale-95 transition-transform">
-                        Start New Reading
-                    </button>
-                    <div class="pt-8 opacity-20">
-                         <div class="flex gap-2">
-                            <div class="w-12 h-20 border border-white/20 rounded-lg -rotate-12"></div>
-                            <div class="w-12 h-20 border border-white/20 rounded-lg translate-y-[-10px]"></div>
-                            <div class="w-12 h-20 border border-white/20 rounded-lg rotate-12"></div>
-                         </div>
-                    </div>
-                `;
-                return div;
-            },
-
-            getReadingView() {
-                const div = document.createElement('div');
-                div.className = 'space-y-8 animate-fade';
-                
-                if (this.spread.length === 0) {
-                    div.innerHTML = `
-                        <div class="flex flex-col items-center justify-center pt-20 space-y-6">
-                            <div class="text-slate-600">No active reading</div>
-                            <button onclick="router.drawSpread()" class="text-[#007aff] font-semibold">Shuffle and Draw</button>
+                    root.innerHTML = `
+                        <div class="flex flex-col items-center pt-10 text-center animate-ios">
+                            <div class="w-24 h-24 bg-gradient-to-tr from-amber-500 to-amber-200 rounded-[22px] shadow-lg flex items-center justify-center mb-8">
+                                <span class="text-5xl">🔮</span>
+                            </div>
+                            <h2 class="text-4xl font-mystic font-bold mb-4">Divine Oracle</h2>
+                            <p class="text-[#8e8e93] px-8 text-[15px] mb-10 leading-snug">Seek clarity from the cards. Discover what the universe has in store for you today.</p>
+                            <button onclick="ui.draw()" class="w-full bg-[#007aff] h-14 rounded-2xl font-semibold active:opacity-70 transition-opacity">Start Reading</button>
                         </div>
                     `;
-                } else {
-                    div.innerHTML = `
-                        <div class="space-y-12">
-                            ${this.spread.map((card, i) => `
-                                <div class="flex flex-col items-center animate-slide-up" style="animation-delay: ${i * 100}ms">
-                                    <span class="text-[10px] uppercase tracking-widest text-amber-500 font-bold mb-4 opacity-60">
-                                        ${i === 0 ? 'The Past' : i === 1 ? 'The Present' : 'The Future'}
-                                    </span>
-                                    ${this.createCardHtml(card)}
-                                    <div class="mt-6 text-center px-8">
-                                        <h4 class="text-lg font-semibold text-white">${card.name} ${card.isReversed ? '(Rev)' : ''}</h4>
-                                        <p class="text-sm text-slate-400 mt-2 italic">
-                                            ${card.isReversed ? card.reversed : card.upright}
-                                        </p>
+                } else if (view === 'reading') {
+                    title.innerText = 'Daily Spread';
+                    if (this.spread.length === 0) {
+                        root.innerHTML = `<div class="pt-40 text-center text-[#8e8e93] animate-ios">No active reading.<br/><span onclick="ui.draw()" class="text-[#007aff] font-bold mt-4 block">Shuffle Cards</span></div>`;
+                    } else {
+                        root.innerHTML = `<div class="space-y-12 pb-20">
+                            ${this.spread.map((c, i) => `
+                                <div class="flex flex-col items-center animate-ios" style="animation-delay: ${i*0.1}s">
+                                    <span class="text-[10px] uppercase font-bold text-amber-500/60 tracking-[2px] mb-4">${['Past', 'Present', 'Future'][i]}</span>
+                                    <div onclick="ui.openModal(${c.id}, ${c.rev})" class="w-48 h-72 bg-[#1c1c1e] rounded-2xl border border-white/10 shadow-xl flex flex-col items-center justify-center p-6 active:scale-95 transition-transform ${c.rev ? 'reversed' : ''}">
+                                        <div class="text-6xl mb-4">${c.icon}</div>
+                                        <h3 class="font-mystic text-amber-100 text-lg">${c.name}</h3>
                                     </div>
+                                    <p class="mt-4 px-10 text-center text-sm text-[#8e8e93] italic leading-relaxed">"${c.rev ? c.meaningRev : c.meaningUp}"</p>
                                 </div>
                             `).join('')}
-                            <div class="pb-12 pt-4 flex justify-center">
-                                <button onclick="router.drawSpread()" class="px-8 py-3 bg-white/5 border border-white/10 text-white rounded-full text-sm font-medium">New Reading</button>
-                            </div>
-                        </div>
-                    `;
+                        </div>`;
+                    }
+                } else if (view === 'deck') {
+                    title.innerText = 'The Library';
+                    root.innerHTML = `<div class="grid grid-cols-3 gap-3 animate-ios">
+                        ${CARDS.map(c => `<div onclick="ui.openModal(${c.id}, false)" class="aspect-[2/3] bg-[#1c1c1e] rounded-xl border border-white/5 flex flex-col items-center justify-center p-2 active:opacity-50 transition-opacity">
+                            <span class="text-2xl mb-1">${c.icon}</span>
+                            <span class="text-[9px] uppercase text-[#8e8e93] truncate w-full text-center">${c.name}</span>
+                        </div>`).join('')}
+                    </div>`;
                 }
-                return div;
             },
 
-            getDeckView() {
-                const div = document.createElement('div');
-                div.className = 'animate-fade';
-                div.innerHTML = `
-                    <div class="grid grid-cols-3 gap-3">
-                        ${TAROT_DECK.map(card => `
-                            <div onclick="router.showDetail(${card.id}, false)" class="aspect-[2/3] bg-[#1c1c1e] rounded-xl border border-white/5 flex flex-col items-center justify-center p-2 text-center active:scale-95 transition-transform">
-                                <span class="text-2xl mb-1">${card.img}</span>
-                                <span class="text-[9px] uppercase tracking-tighter text-slate-500 truncate w-full">${card.name}</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-                return div;
-            },
-
-            createCardHtml(card) {
-                return `
-                    <div onclick="router.showDetail(${card.id}, ${card.isReversed || false})" class="w-48 h-72 bg-gradient-to-br from-indigo-950 to-purple-950 rounded-2xl border-2 border-white/10 shadow-2xl flex flex-col items-center justify-center p-6 text-center transition-transform active:scale-95 ${card.isReversed ? 'reversed' : ''}">
-                        <div class="text-6xl mb-4">${card.img}</div>
-                        <h3 class="font-mystic text-amber-100 text-lg">${card.name}</h3>
-                        <p class="text-[8px] uppercase tracking-widest text-amber-500/50 mt-1">${card.arcana}</p>
-                    </div>
-                `;
-            },
-
-            drawSpread() {
-                this.spread = [...TAROT_DECK]
+            draw() {
+                this.spread = [...CARDS]
                     .sort(() => Math.random() - 0.5)
                     .slice(0, 3)
-                    .map(c => ({ ...c, isReversed: Math.random() > 0.7 }));
-                this.go('reading');
+                    .map(c => ({
+                        ...c,
+                        rev: Math.random() > 0.7,
+                        meaningUp: c.up,
+                        meaningRev: c.rev
+                    }));
+                this.render('reading');
             },
 
-            showDetail(id, isReversed) {
-                const card = TAROT_DECK.find(c => c.id === id);
-                const overlay = document.getElementById('modal-overlay');
-                const sheet = document.getElementById('bottom-sheet');
-                const content = document.getElementById('sheet-content');
-
-                content.innerHTML = `
-                    <div class="flex flex-col items-center pt-4">
-                        <div class="w-32 h-48 bg-gradient-to-br from-indigo-900 to-purple-900 rounded-xl flex flex-col items-center justify-center p-4 text-center mb-8 border border-white/20 ${isReversed ? 'reversed' : ''}">
-                             <span class="text-4xl mb-2">${card.img}</span>
-                             <span class="text-xs font-mystic text-amber-200">${card.name}</span>
+            openModal(id, isRev) {
+                const card = CARDS.find(c => c.id === id);
+                const inner = document.getElementById('sheet-inner');
+                inner.innerHTML = `
+                    <div class="flex flex-col items-center pt-2">
+                        <div class="w-32 h-48 bg-gradient-to-b from-[#2c2c2e] to-[#1c1c1e] rounded-xl flex flex-col items-center justify-center border border-white/10 mb-8 ${isRev ? 'reversed' : ''}">
+                            <span class="text-4xl mb-2">${card.icon}</span>
+                            <span class="text-[10px] font-mystic text-amber-200">${card.name}</span>
                         </div>
-                        <div class="w-full space-y-8">
+                        <div class="w-full space-y-6">
                             <div>
-                                <h5 class="text-[#007aff] font-bold text-[10px] uppercase tracking-widest mb-2">Upright Meaning</h5>
-                                <p class="text-slate-200 text-lg leading-snug">"${card.upright}"</p>
+                                <h4 class="text-[#007aff] text-[11px] font-bold uppercase tracking-widest mb-2">Upright</h4>
+                                <p class="text-[17px] leading-tight text-white/90">"${card.up}"</p>
                             </div>
-                            <div class="pb-12">
-                                <h5 class="text-rose-500 font-bold text-[10px] uppercase tracking-widest mb-2">Reversed Meaning</h5>
-                                <p class="text-slate-200 text-lg leading-snug">"${card.reversed}"</p>
+                            <div class="pt-4 border-t border-white/5">
+                                <h4 class="text-[#ff3b30] text-[11px] font-bold uppercase tracking-widest mb-2">Reversed</h4>
+                                <p class="text-[17px] leading-tight text-white/90">"${card.rev}"</p>
                             </div>
                         </div>
+                        <button onclick="ui.closeModal()" class="w-full mt-10 h-14 bg-[#2c2c2e] rounded-xl font-bold text-white active:bg-[#3a3a3c]">Dismiss</button>
                     </div>
                 `;
-
-                overlay.classList.remove('hidden');
-                sheet.classList.add('active');
+                document.getElementById('overlay').classList.remove('hidden');
+                document.getElementById('sheet').classList.add('active');
             },
 
-            closeDetail() {
-                document.getElementById('modal-overlay').classList.add('hidden');
-                document.getElementById('bottom-sheet').classList.remove('active');
+            closeModal() {
+                document.getElementById('overlay').classList.add('hidden');
+                document.getElementById('sheet').classList.remove('active');
             }
         };
 
-        window.onload = () => router.render();
+        window.onload = () => ui.render('home');
     </script>
 </body>
 </html>
