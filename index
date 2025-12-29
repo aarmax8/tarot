@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Sparkles, 
   Moon, 
@@ -61,6 +61,29 @@ export default function App() {
   const [isLoadingReading, setIsLoadingReading] = useState(false);
   const [deck] = useState([...TAROT_DECK]);
 
+  // --- Mobile Optimization Hook ---
+  useEffect(() => {
+    // Inject mobile meta tags to ensure iPhone looks correct
+    const meta = document.createElement('meta');
+    meta.name = "viewport";
+    meta.content = "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover";
+    document.getElementsByTagName('head')[0].appendChild(meta);
+    
+    // Set theme color for iPhone status bar
+    const themeMeta = document.createElement('meta');
+    themeMeta.name = "theme-color";
+    themeMeta.content = "#020617";
+    document.getElementsByTagName('head')[0].appendChild(themeMeta);
+    
+    // Prevent scrolling bounce on some mobile browsers
+    document.body.style.overscrollBehavior = 'none';
+    document.body.style.backgroundColor = '#020617';
+    
+    return () => {
+      document.body.style.overscrollBehavior = 'auto';
+    };
+  }, []);
+
   const handleDrawCard = (index) => {
     if (drawnCards.length >= 3) return;
     const card = deck[index % deck.length];
@@ -77,20 +100,15 @@ export default function App() {
     setIsLoadingReading(true);
     setStep('interpretation');
 
-    // Simulate "Consulting the Stars" delay for immersion
     setTimeout(() => {
       const [past, present, future] = drawnCards;
       const zodiacTrait = ZODIAC_DATA[selectedSign];
 
       const intro = `As a ${selectedSign}, your ${zodiacTrait} is currently reacting to the cosmic alignment. `;
-      
-      const pastPart = `In the recent past, ${past.name} indicated a period characterized by ${past.meaning}. This established the foundation for your current path. `;
-      
-      const presentPart = `Right now, ${present.name} suggests you are navigating ${present.meaning}. For a ${selectedSign}, this requires you to lean into your natural strength. `;
-      
-      const futurePart = `Looking ahead, ${future.name} promises ${future.meaning}. This transition will be pivotal for your spiritual evolution. `;
-      
-      const advice = `Trust in your ${selectedSign} intuition as you integrate these energies.`;
+      const pastPart = `In the recent past, ${past.name} indicated a period of ${past.meaning}. `;
+      const presentPart = `Right now, ${present.name} suggests you are navigating ${present.meaning}. `;
+      const futurePart = `Looking ahead, ${future.name} promises ${future.meaning}. `;
+      const advice = `Trust in your ${selectedSign} intuition.`;
 
       setReadingText(intro + pastPart + presentPart + futurePart + advice);
       setIsLoadingReading(false);
@@ -105,44 +123,47 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-amber-500/30">
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-900/20 blur-[120px] rounded-full"></div>
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-900/20 blur-[120px] rounded-full"></div>
+    <div className="fixed inset-0 bg-slate-950 text-slate-100 font-sans selection:bg-amber-500/30 overflow-y-auto overflow-x-hidden flex flex-col">
+      {/* Dynamic Background */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-indigo-900/20 blur-[120px] rounded-full"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-purple-900/20 blur-[120px] rounded-full"></div>
       </div>
 
-      <header className="relative z-10 p-6 flex items-center justify-between border-b border-white/10 backdrop-blur-md sticky top-0">
-        <div className="flex items-center gap-2">
-          <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/20">
-            <Sparkles className="text-white" size={20} />
+      {/* Header - Optimized for iPhone Notch */}
+      <header className="relative z-20 pt-[env(safe-area-inset-top)] px-6 pb-4 flex items-center justify-between border-b border-white/10 backdrop-blur-xl bg-slate-950/50 sticky top-0">
+        <div className="flex items-center gap-2 mt-2">
+          <div className="w-9 h-9 bg-gradient-to-br from-amber-400 to-orange-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-600/20">
+            <Sparkles className="text-white" size={18} />
           </div>
-          <h1 className="text-xl font-serif font-bold tracking-tight">Stellar Tarot</h1>
+          <h1 className="text-lg font-serif font-bold tracking-tight">Stellar Tarot</h1>
         </div>
         {selectedSign && (
-          <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/10">
-            <User size={14} className="text-amber-400" />
-            <span className="text-xs font-medium uppercase tracking-widest">{selectedSign}</span>
+          <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/10 mt-2">
+            <User size={12} className="text-amber-400" />
+            <span className="text-[10px] font-bold uppercase tracking-widest">{selectedSign}</span>
           </div>
         )}
       </header>
 
-      <main className="relative z-10 max-w-4xl mx-auto p-6 pb-24">
+      {/* Main App Content */}
+      <main className="relative z-10 w-full max-w-lg mx-auto p-6 flex-grow flex flex-col">
         
         {step === 'sign-selection' && (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <div className="text-center space-y-2">
-              <h2 className="text-3xl font-serif">Welcome, seeker</h2>
-              <p className="text-slate-400">Select your zodiac sign to begin your journey.</p>
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 flex-grow">
+            <div className="text-center space-y-2 py-6">
+              <h2 className="text-3xl font-serif">Seek your path</h2>
+              <p className="text-slate-400 text-sm">Align the cards with your zodiac energy.</p>
             </div>
-            <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               {ZODIAC_SIGNS.map(sign => (
                 <button
                   key={sign}
                   onClick={() => { setSelectedSign(sign); setStep('shuffling'); }}
-                  className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-amber-500/50 hover:bg-white/10 transition-all text-sm font-medium flex flex-col items-center gap-2 active:scale-95"
+                  className="aspect-square rounded-2xl bg-white/5 border border-white/10 flex flex-col items-center justify-center gap-2 active:scale-90 transition-all active:bg-amber-500/20 active:border-amber-500"
                 >
-                  <Sun size={18} className="text-amber-500" />
-                  {sign}
+                  <Sun size={20} className="text-amber-500/80" />
+                  <span className="text-[10px] font-bold uppercase tracking-tighter">{sign}</span>
                 </button>
               ))}
             </div>
@@ -150,32 +171,31 @@ export default function App() {
         )}
 
         {step === 'shuffling' && (
-          <div className="space-y-8 animate-in fade-in duration-500">
+          <div className="space-y-8 animate-in fade-in duration-500 flex flex-col flex-grow">
             <div className="flex justify-between items-end">
               <div>
-                <h2 className="text-2xl font-serif">Draw Your Path</h2>
-                <p className="text-slate-400 text-sm">Select 3 cards for Past, Present, and Future.</p>
+                <h2 className="text-xl font-serif">Draw Three Cards</h2>
+                <p className="text-slate-400 text-xs">Past • Present • Future</p>
               </div>
               <button 
                 onClick={autoDraw}
-                className="flex items-center gap-2 text-amber-400 text-sm font-medium hover:underline"
+                className="flex items-center gap-1.5 text-amber-500 text-xs font-bold uppercase"
               >
-                <RefreshCw size={14} /> Auto-Draw
+                <RefreshCw size={12} /> Auto
               </button>
             </div>
 
-            <div className="flex justify-center gap-4 min-h-[160px] md:min-h-[220px]">
+            <div className="flex justify-center gap-3">
               {[0, 1, 2].map((i) => (
-                <div key={i} className="flex flex-col items-center gap-2">
-                  <div className="w-24 h-36 md:w-32 md:h-48 rounded-xl border-2 border-dashed border-white/10 flex items-center justify-center relative">
+                <div key={i} className="flex-1 max-w-[100px]">
+                  <div className="aspect-[2/3] rounded-xl border-2 border-dashed border-white/10 flex items-center justify-center relative overflow-hidden">
                     {drawnCards[i] ? (
-                      <div className="bg-white rounded-lg p-2 text-indigo-900 w-full h-full flex flex-col items-center justify-center animate-in zoom-in-95 duration-300 shadow-xl border-2 border-amber-500 overflow-hidden">
-                        <span className="text-4xl">{drawnCards[i].image}</span>
-                        <span className="text-[10px] uppercase font-bold text-center mt-2 leading-tight">{drawnCards[i].name}</span>
-                        <div className="absolute top-1 right-1 opacity-10"><Sparkles size={12} /></div>
+                      <div className="bg-white text-indigo-950 w-full h-full flex flex-col items-center justify-center p-2 animate-in zoom-in-90 shadow-2xl">
+                        <span className="text-3xl">{drawnCards[i].image}</span>
+                        <span className="text-[8px] uppercase font-black text-center mt-2 leading-none">{drawnCards[i].name}</span>
                       </div>
                     ) : (
-                      <span className="text-white/20 text-[10px] uppercase tracking-tighter">
+                      <span className="text-white/10 text-[8px] font-bold uppercase rotate-90 whitespace-nowrap">
                         {i === 0 ? "Past" : i === 1 ? "Present" : "Future"}
                       </span>
                     )}
@@ -185,28 +205,28 @@ export default function App() {
             </div>
 
             {drawnCards.length < 3 ? (
-              <div className="relative h-48 flex items-center justify-center overflow-x-auto py-4">
-                <div className="flex -space-x-12 px-12">
-                  {[...Array(15)].map((_, i) => (
+              <div className="flex-grow flex items-center justify-center py-10">
+                <div className="flex -space-x-14 overflow-visible">
+                  {[...Array(8)].map((_, i) => (
                     <div 
                       key={i}
                       onClick={() => handleDrawCard(i)}
-                      className="w-24 h-36 md:w-32 md:h-48 bg-indigo-950 rounded-xl border border-amber-400/30 shadow-2xl hover:-translate-y-4 transition-transform cursor-pointer flex-shrink-0 flex items-center justify-center group"
-                      style={{ transform: `rotate(${(i - 7) * 2}deg)` }}
+                      className="w-20 h-32 bg-indigo-950 rounded-xl border border-amber-400/20 shadow-xl active:-translate-y-6 transition-all cursor-pointer flex items-center justify-center"
+                      style={{ transform: `rotate(${(i - 3.5) * 6}deg)` }}
                     >
-                      <Moon className="text-amber-500/20 group-hover:text-amber-500/50 transition-colors" size={24} />
+                      <Moon className="text-amber-500/10" size={20} />
                     </div>
                   ))}
                 </div>
               </div>
             ) : (
-              <div className="flex justify-center pt-8">
+              <div className="pt-8 flex justify-center">
                 <button
                   onClick={generateLocalReading}
-                  className="bg-gradient-to-r from-amber-500 to-orange-600 text-white px-12 py-4 rounded-full font-bold shadow-xl shadow-amber-500/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-3"
+                  className="w-full max-w-xs bg-gradient-to-r from-amber-500 to-orange-600 text-white h-14 rounded-2xl font-bold shadow-xl active:scale-95 transition-all flex items-center justify-center gap-3"
                 >
-                  <BookOpen size={20} />
-                  Reveal Meaning
+                  <BookOpen size={18} />
+                  Interpret My Stars
                 </button>
               </div>
             )}
@@ -214,58 +234,48 @@ export default function App() {
         )}
 
         {step === 'interpretation' && (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-1000">
-            <div className="text-center space-y-2">
-              <span className="text-amber-500 text-xs font-bold uppercase tracking-widest">Alignment for {selectedSign}</span>
-              <h2 className="text-3xl font-serif">The Cosmic Reading</h2>
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-700 flex flex-col flex-grow">
+            <div className="text-center space-y-1">
+              <span className="text-amber-500 text-[10px] font-bold uppercase tracking-widest">Divine Alignment</span>
+              <h2 className="text-2xl font-serif">The Path of {selectedSign}</h2>
             </div>
 
-            <div className="grid grid-cols-3 gap-3 md:gap-6">
-              {drawnCards.map((card, i) => (
-                <div key={i} className="bg-white/5 rounded-2xl p-4 border border-white/10 text-center space-y-2">
-                  <div className="text-[10px] text-amber-500 font-bold uppercase tracking-widest">
-                    {i === 0 ? "Past" : i === 1 ? "Present" : "Future"}
-                  </div>
-                  <div className="text-3xl">{card.image}</div>
-                  <div className="text-xs font-serif font-bold text-slate-300">{card.name}</div>
-                </div>
-              ))}
-            </div>
-
-            <div className="bg-white/5 backdrop-blur-md rounded-3xl p-6 md:p-10 border border-white/10 shadow-inner relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-4 text-white/5">
-                <Sparkles size={120} />
-              </div>
-              
+            <div className="bg-white/5 backdrop-blur-md rounded-[2.5rem] p-8 border border-white/10 shadow-inner relative overflow-hidden flex-grow flex flex-col justify-center">
               {isLoadingReading ? (
                 <div className="flex flex-col items-center justify-center py-12 space-y-4">
-                  <Loader2 className="animate-spin text-amber-500" size={40} />
-                  <p className="text-slate-400 animate-pulse font-serif italic text-lg text-center">Consulting your stars...</p>
+                  <Loader2 className="animate-spin text-amber-500" size={32} />
+                  <p className="text-slate-400 italic text-sm">Aligning your energy...</p>
                 </div>
               ) : (
-                <div className="space-y-6 relative z-10">
-                  <p className="text-slate-200 leading-relaxed text-lg font-serif first-letter:text-4xl first-letter:font-bold first-letter:text-amber-500 first-letter:mr-1 first-letter:float-left text-justify">
+                <div className="space-y-6">
+                  <p className="text-slate-200 leading-relaxed text-base font-serif text-justify first-letter:text-3xl first-letter:text-amber-500 first-letter:font-bold">
                     {readingText}
                   </p>
-                  <div className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent w-full"></div>
-                  <div className="flex justify-between items-center">
-                    <button 
-                      onClick={reset}
-                      className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
-                    >
-                      <RotateCcw size={16} />
-                      <span className="text-sm">New Reading</span>
-                    </button>
-                    <div className="text-[10px] uppercase tracking-widest text-white/30 font-bold">
-                      Stellar Tarot v1.0
-                    </div>
-                  </div>
+                  <div className="h-px bg-white/10 w-full"></div>
+                  <button 
+                    onClick={reset}
+                    className="w-full h-12 rounded-xl bg-white/5 border border-white/10 text-slate-300 text-xs font-bold uppercase flex items-center justify-center gap-2 active:bg-white/10"
+                  >
+                    <RotateCcw size={14} /> New Reading
+                  </button>
                 </div>
               )}
             </div>
+            
+            {/* Safe Area Spacer for iPhone Home Bar */}
+            <div className="h-[env(safe-area-inset-bottom)] min-h-[16px]"></div>
           </div>
         )}
       </main>
+      
+      {/* Mobile-Specific CSS */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        @supports (padding-top: env(safe-area-inset-top)) {
+          .pt-safe { padding-top: env(safe-area-inset-top); }
+          .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+        }
+        body { margin: 0; padding: 0; overflow: hidden; height: 100%; width: 100%; position: fixed; }
+      `}} />
     </div>
   );
 }
