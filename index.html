@@ -8,14 +8,21 @@
     <title>The Essential Oracle</title>
     <style>
         :root {
-            --bg: #0a0a0a;
+            --bg: #050505;
+            --card-bg: #0a0a0c;
             --paper: #fcfaf2;
-            --paper-dark: #f0ede0;
-            --gold: #c5a059;
-            --gold-dim: #8e7341;
-            --gray: #4a4a4a;
-            --border: rgba(197, 160, 89, 0.4);
-            --black: #1a1a1a;
+            --gold: #d4af37;
+            --gold-bright: #f9e498;
+            --gold-dim: #8a6d3b;
+            --gray: #666666;
+            --border: rgba(212, 175, 55, 0.5);
+            
+            /* Suit Colors */
+            --wands: #631919;
+            --cups: #1a2a44;
+            --swords: #1a3a3a;
+            --pents: #1a2e1a;
+            --major: #2e1a3a;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -31,7 +38,7 @@
 
         header {
             position: fixed; top: 0; width: 100%; z-index: 100;
-            background: rgba(10, 10, 10, 0.9);
+            background: rgba(5, 5, 5, 0.9);
             backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
             border-bottom: 0.5px solid var(--border);
             padding: 60px 20px 15px 20px; text-align: center;
@@ -47,7 +54,7 @@
 
         nav {
             position: fixed; bottom: 0; width: 100%; z-index: 100;
-            background: rgba(10, 10, 10, 0.95);
+            background: rgba(5, 5, 5, 0.95);
             backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
             border-top: 0.5px solid var(--border);
             display: flex; justify-content: space-around;
@@ -74,76 +81,126 @@
             width: 100%; max-width: 280px;
             height: 50px; border-radius: 0; font-size: 12px; font-weight: 400;
             text-transform: uppercase; letter-spacing: 3px;
-            margin-top: 30px; cursor: pointer; transition: all 0.4s;
+            margin-top: 20px; cursor: pointer; transition: all 0.4s;
         }
         .btn:active { background: var(--gold); color: var(--bg); transform: scale(0.98); }
 
-        .hero { text-align: center; padding-top: 50px; }
+        .hero { text-align: center; padding-top: 30px; }
         .hero-symbol { 
-            font-size: 50px; color: var(--gold); margin-bottom: 30px;
+            font-size: 50px; color: var(--gold); margin-bottom: 20px;
             display: block; opacity: 0.6; animation: float 4s ease-in-out infinite;
         }
 
-        /* Essential Reading Card Visuals */
+        .zodiac-container {
+            margin: 20px auto;
+            max-width: 280px;
+            text-align: center;
+        }
+        .zodiac-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--gold-dim);
+            margin-bottom: 10px;
+            display: block;
+        }
+        .zodiac-select {
+            width: 100%;
+            background: #111;
+            color: var(--paper);
+            border: 1px solid var(--border);
+            padding: 12px;
+            font-family: inherit;
+            font-size: 14px;
+            text-align-last: center;
+            outline: none;
+            border-radius: 0;
+            cursor: pointer;
+            appearance: none;
+        }
+
+        /* Reading Layout */
         .spread-row {
             display: flex;
             justify-content: center;
-            gap: 12px;
+            gap: 10px;
             width: 100%;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
             padding-top: 20px;
         }
 
         .slot { flex: 1; text-align: center; }
         .slot-title { font-size: 8px; font-weight: 400; color: var(--gold-dim); text-transform: uppercase; letter-spacing: 3px; margin-bottom: 15px; }
         
-        /* The Artistic Card Base */
+        /* New Artistic Card Base */
         .essential-card {
             width: 100%; aspect-ratio: 2/3; 
-            background: linear-gradient(135deg, var(--paper) 0%, var(--paper-dark) 100%);
-            border-radius: 3px; 
-            border: 1px solid var(--gold); 
+            background: radial-gradient(circle at center, #1a1a1c 0%, #050505 100%);
+            border-radius: 6px; 
+            border: 1px solid var(--gold-dim); 
             margin: 0 auto;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.8);
             position: relative;
-            color: var(--black);
+            color: var(--gold);
             overflow: hidden;
+            transition: border-color 0.3s;
         }
         .essential-card.rev { transform: rotate(180deg); }
         
+        .card-glow {
+            position: absolute;
+            inset: 0;
+            opacity: 0.15;
+            pointer-events: none;
+        }
+
         .card-frame {
             position: absolute;
-            inset: 8px;
-            border: 0.5px solid rgba(197, 160, 89, 0.3);
+            inset: 6px;
+            border: 1px solid var(--gold-dim);
+            opacity: 0.4;
             pointer-events: none;
         }
-        .card-frame::after {
-            content: '';
-            position: absolute;
-            inset: 4px;
-            border: 0.5px solid rgba(0,0,0,0.05);
+        .card-frame::before {
+            content: ''; position: absolute; inset: 2px; border: 0.5px solid var(--gold-dim); opacity: 0.3;
         }
 
-        .card-symbol-bg {
-            position: absolute;
-            font-size: 100px;
-            opacity: 0.04;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            pointer-events: none;
+        .card-art-container {
+            width: 60%;
+            height: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 5;
+            margin-bottom: 10px;
         }
 
-        .card-art { font-size: 38px; margin-bottom: 12px; filter: contrast(1.2); z-index: 5; }
-        .card-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; text-align: center; padding: 0 5px; z-index: 5; }
-        .card-num { font-size: 8px; position: absolute; top: 15px; font-weight: bold; letter-spacing: 2px; }
+        .card-label { 
+            font-size: 9px; 
+            font-weight: 700; 
+            text-transform: uppercase; 
+            letter-spacing: 1.5px; 
+            text-align: center; 
+            padding: 0 5px; 
+            z-index: 5;
+            color: var(--gold-bright);
+        }
+        
+        .card-num { 
+            font-size: 10px; 
+            position: absolute; 
+            top: 15px; 
+            font-weight: bold; 
+            letter-spacing: 2px;
+            color: var(--gold-dim);
+        }
 
         /* Deck View Grid */
         .deck-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            gap: 15px;
         }
 
         .flip-container {
@@ -156,7 +213,7 @@
             position: relative;
             width: 100%;
             height: 100%;
-            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             transform-style: preserve-3d;
             cursor: pointer;
         }
@@ -170,46 +227,45 @@
             width: 100%;
             height: 100%;
             backface-visibility: hidden;
-            border-radius: 4px;
-            border: 1px solid var(--gold);
+            border-radius: 6px;
+            border: 1.5px solid var(--gold-dim);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            padding: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
 
         .card-front {
-            background: linear-gradient(135deg, var(--paper) 0%, var(--paper-dark) 100%);
-            color: var(--black);
+            background: radial-gradient(circle at center, #1a1a1c 0%, #050505 100%);
             z-index: 2;
         }
 
         .card-back {
-            background: #111;
-            color: var(--paper);
+            background: #000;
+            color: var(--gold);
             transform: rotateY(180deg);
-            border: 1px solid var(--gold-dim);
         }
 
         .card-back-pattern {
             position: absolute;
-            inset: 10px;
-            border: 0.5px solid var(--gold-dim);
+            inset: 8px;
+            border: 1px solid var(--gold-dim);
             display: flex;
             align-items: center;
             justify-content: center;
-            opacity: 0.4;
+            opacity: 0.3;
         }
-        
-        .card-back-symbol { font-size: 24px; color: var(--gold); }
+        .card-back-pattern::after {
+            content: '✧'; font-size: 40px; color: var(--gold);
+        }
 
         /* Outcome Summary */
         .outcome-box {
-            background: rgba(197, 160, 89, 0.03);
+            background: rgba(212, 175, 55, 0.03);
             border: 0.5px solid var(--border);
-            padding: 30px 25px;
+            padding: 25px;
             margin-top: 15px;
             text-align: left;
             position: relative;
@@ -225,7 +281,7 @@
             color: var(--gold);
             font-size: 14px;
         }
-        .outcome-title { font-size: 9px; font-weight: 700; color: var(--gold); text-transform: uppercase; letter-spacing: 3px; margin-bottom: 15px; display: block; }
+        .outcome-title { font-size: 9px; font-weight: 700; color: var(--gold); text-transform: uppercase; letter-spacing: 3px; margin-bottom: 12px; display: block; }
         .outcome-text { font-size: 15px; color: var(--paper); line-height: 1.7; font-weight: 300; }
 
         /* Modal Details */
@@ -234,10 +290,10 @@
             display: none; align-items: flex-end;
         }
         .sheet {
-            background: #080808; width: 100%; border-radius: 0;
+            background: #0a0a0c; width: 100%; border-radius: 0;
             border-top: 1px solid var(--gold);
             padding: 40px 25px 70px 25px; text-align: center;
-            transform: translateY(100%); transition: transform 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+            transform: translateY(100%); transition: transform 0.5s cubic-bezier(0.19, 1, 0.22, 1);
         }
         .sheet.open { transform: translateY(0); }
         .handle { width: 40px; height: 1px; background: var(--gold); margin: 0 auto 40px auto; opacity: 0.5; }
@@ -256,47 +312,62 @@
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
 
-        .reading-detail-card {
-            width: 140px; height: 210px; 
-            background: var(--paper); 
-            color: var(--black); 
+        .detail-card-visual {
+            width: 160px; height: 240px; 
+            background: radial-gradient(circle at center, #1a1a1c 0%, #050505 100%);
             margin: 0 auto 35px auto; 
             display: flex; flex-direction: column; 
             align-items: center; justify-content: center; 
-            border-radius: 4px; 
-            box-shadow: 0 15px 40px rgba(0,0,0,0.7); 
+            border-radius: 8px; 
+            box-shadow: 0 15px 40px rgba(0,0,0,0.8); 
             border: 1.5px solid var(--gold);
             position: relative;
         }
+
+        /* SVG Art Elements */
+        .svg-icon { width: 100%; height: 100%; fill: none; stroke: var(--gold); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
     </style>
 </head>
 <body>
 
     <header><h1>The Essential Oracle</h1></header>
 
-    <!-- Home Screen -->
+    <!-- Home -->
     <div id="view-home" class="view">
         <div class="hero">
             <span class="hero-symbol">✧</span>
             <h2 style="font-size: 26px; font-weight: 400; margin: 0 0 15px 0; letter-spacing: 3px; text-transform: uppercase;">Essential Insight</h2>
-            <p style="color: var(--gray); font-size: 15px; margin-bottom: 50px; padding: 0 25px; line-height: 1.6; font-style: italic;">"Everything you need is already within. The cards are but a mirror."</p>
+            
+            <div class="zodiac-container">
+                <label class="zodiac-label">Celestial Signature</label>
+                <select id="user-zodiac" class="zodiac-select">
+                    <option value="" disabled selected>Your Zodiac Sign</option>
+                    <option value="Aries">Aries</option><option value="Taurus">Taurus</option>
+                    <option value="Gemini">Gemini</option><option value="Cancer">Cancer</option>
+                    <option value="Leo">Leo</option><option value="Virgo">Virgo</option>
+                    <option value="Libra">Libra</option><option value="Scorpio">Scorpio</option>
+                    <option value="Sagittarius">Sagittarius</option><option value="Capricorn">Capricorn</option>
+                    <option value="Aquarius">Aquarius</option><option value="Pisces">Pisces</option>
+                </select>
+            </div>
+
+            <p style="color: var(--gray); font-size: 14px; margin-bottom: 40px; padding: 0 25px; line-height: 1.6; font-style: italic;">"Deep within the shadow, the light of truth remains. Draw three keys to unlock your path."</p>
             <button class="btn" onclick="oracle.draw()">Draw Your Fate</button>
         </div>
     </div>
 
-    <!-- Reading Spread Screen -->
+    <!-- Reading -->
     <div id="view-reading" class="view">
         <div id="reading-display"></div>
         <div id="reading-outcome"></div>
-        <div style="text-align: center;"><button class="btn" style="margin-top: 40px; border: 0.5px solid var(--gray); color: var(--gray); font-size: 10px;" onclick="oracle.draw()">Clear Path</button></div>
+        <div style="text-align: center;"><button class="btn" style="margin-top: 40px; border: 0.5px solid var(--gray); color: var(--gray); font-size: 10px;" onclick="oracle.draw()">New Spread</button></div>
     </div>
 
-    <!-- Deck Library Screen -->
+    <!-- Library/Deck -->
     <div id="view-deck" class="view">
         <div class="deck-grid" id="deck-grid"></div>
     </div>
 
-    <!-- Navigation Bar -->
     <nav>
         <div class="tab" id="tab-home" onclick="oracle.nav('home')">
             <span class="tab-icon">○</span>
@@ -312,7 +383,7 @@
         </div>
     </nav>
 
-    <!-- Detail Modal -->
+    <!-- Modal -->
     <div id="modal" onclick="oracle.close()">
         <div class="sheet" id="sheet" onclick="event.stopPropagation()">
             <div class="handle"></div>
@@ -322,36 +393,51 @@
     </div>
 
     <script>
+        const ZODIAC_DATA = {
+            "Aries": "Fire", "Leo": "Fire", "Sagittarius": "Fire",
+            "Taurus": "Earth", "Virgo": "Earth", "Capricorn": "Earth",
+            "Gemini": "Air", "Libra": "Air", "Aquarius": "Air",
+            "Cancer": "Water", "Scorpio": "Water", "Pisces": "Water"
+        };
+
+        const SVG_ART = {
+            "Major": `<svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>`,
+            "Wands": `<svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 2l-2 5h4l-2 5 3-1 1 11H9l1-11 3 1-2-5h4l-2-5z"/></svg>`,
+            "Cups": `<svg class="svg-icon" viewBox="0 0 24 24"><path d="M6 3h12v4c0 4-3 7-6 7s-6-3-6-7V3z"/><path d="M12 14v7M8 21h8"/></svg>`,
+            "Swords": `<svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 2v16M9 18h6M11 21h2"/><path d="M12 2l-3 4h6l-3-4z"/></svg>`,
+            "Pentacles": `<svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7l1.5 3.5h3.5l-2.5 2.5 1 4-3.5-2.5-3.5 2.5 1-4-2.5-2.5h3.5z"/></svg>`
+        };
+
         const MAJOR_ARCANA = [
-            { n: "The Fool", i: "0", z: "Uranus", e: "Air", s: "✧", u: "New beginnings, infinite potential, spontaneity.", r: "Recklessness, risk, being naive." },
-            { n: "The Magician", i: "I", z: "Mercury", e: "Air", s: "🪄", u: "Manifestation, inspired action, capability.", r: "Manipulation, poor planning, wasted talent." },
-            { n: "High Priestess", i: "II", z: "Moon", e: "Water", s: "🌙", u: "Intuition, sacred knowledge, subconscious.", r: "Secrets, withdrawal, silence." },
-            { n: "The Empress", i: "III", z: "Venus", e: "Earth", s: "🌿", u: "Abundance, nature, nurturing, fertility.", r: "Creative block, dependence, over-nurturing." },
-            { n: "The Emperor", i: "IV", z: "Aries", e: "Fire", s: "👑", u: "Authority, structure, solid foundation.", r: "Domination, rigidity, lack of discipline." },
-            { n: "Hierophant", i: "V", z: "Taurus", e: "Earth", s: "🏛️", u: "Tradition, conformity, mentorship.", r: "Personal beliefs, rebellion, restriction." },
-            { n: "The Lovers", i: "VI", z: "Gemini", e: "Air", s: "⚖️", u: "Love, harmony, choices, values.", r: "Self-love, disharmony, misalignment." },
-            { n: "The Chariot", i: "VII", z: "Cancer", e: "Water", s: "⚔️", u: "Direction, control, willpower, victory.", r: "Lack of control, aggression, obstacles." },
-            { n: "Strength", i: "VIII", z: "Leo", e: "Fire", s: "🦁", u: "Courage, persuasion, influence.", r: "Self-doubt, low energy, raw emotion." },
-            { n: "The Hermit", i: "IX", z: "Virgo", e: "Earth", s: "🏮", u: "Introspection, soul-searching, solitude.", r: "Isolation, loneliness, withdrawal." },
-            { n: "The Wheel", i: "X", z: "Jupiter", e: "Fire", s: "🎡", u: "Good luck, destiny, life cycles.", r: "Bad luck, resistance to change." },
-            { n: "Justice", i: "XI", z: "Libra", e: "Air", u: "Truth, fairness, cause and effect.", r: "Unfairness, lack of accountability." },
-            { n: "Hanged Man", i: "XII", z: "Neptune", e: "Water", s: "🌊", u: "Pause, surrender, new perspective.", r: "Stalling, resistance, ego struggle." },
-            { n: "Death", i: "XIII", z: "Scorpio", e: "Water", s: "🥀", u: "Endings, change, transformation.", r: "Resistance to change, inner purging." },
-            { n: "Temperance", i: "XIV", z: "Sagittarius", e: "Fire", s: "🍷", u: "Balance, moderation, patience.", r: "Imbalance, excess, self-healing." },
-            { n: "The Devil", i: "XV", z: "Capricorn", e: "Earth", s: "⛓️", u: "Shadow self, attachment, addiction.", r: "Releasing limiting beliefs, detachment." },
-            { n: "The Tower", i: "XVI", z: "Mars", e: "Fire", s: "⚡", u: "Sudden upheaval, chaos, revelation.", r: "Personal transformation, averting disaster." },
-            { n: "The Star", i: "XVII", z: "Aquarius", e: "Air", s: "✨", u: "Hope, faith, renewal, purpose.", r: "Despair, lack of faith, self-trust." },
-            { n: "The Moon", i: "XVIII", z: "Pisces", e: "Water", s: "🌒", u: "Illusion, fear, intuition, anxiety.", r: "Release of fear, repressed emotion." },
-            { n: "The Sun", i: "XIX", z: "Sun", e: "Fire", s: "☀️", u: "Positivity, fun, warmth, vitality.", r: "Inner child, feeling down." },
-            { n: "Judgement", i: "XX", z: "Pluto", e: "Fire/Water", s: "🔔", u: "Rebirth, calling, absolution.", r: "Self-doubt, inner critic." },
-            { n: "The World", i: "XXI", z: "Saturn", e: "Earth", s: "🌍", u: "Completion, integration, travel.", r: "Seeking closure, shortcuts." }
+            { n: "The Fool", i: "0", z: "Uranus", e: "Air", type: "Major", u: "New beginnings, infinite potential, spontaneity.", r: "Recklessness, risk, being naive." },
+            { n: "Magician", i: "I", z: "Mercury", e: "Air", type: "Major", u: "Manifestation, inspired action, capability.", r: "Manipulation, poor planning." },
+            { n: "High Priestess", i: "II", z: "Moon", e: "Water", type: "Major", u: "Intuition, sacred knowledge, subconscious.", r: "Secrets, withdrawal, silence." },
+            { n: "The Empress", i: "III", z: "Venus", e: "Earth", type: "Major", u: "Abundance, nature, nurturing, fertility.", r: "Creative block, dependence." },
+            { n: "The Emperor", i: "IV", z: "Aries", e: "Fire", type: "Major", u: "Authority, structure, solid foundation.", r: "Domination, rigidity." },
+            { n: "Hierophant", i: "V", z: "Taurus", e: "Earth", type: "Major", u: "Tradition, conformity, mentorship.", r: "Personal beliefs, rebellion." },
+            { n: "The Lovers", i: "VI", z: "Gemini", e: "Air", type: "Major", u: "Love, harmony, choices, values.", r: "Self-love, disharmony." },
+            { n: "The Chariot", i: "VII", z: "Cancer", e: "Water", type: "Major", u: "Direction, control, willpower, victory.", r: "Lack of control, aggression." },
+            { n: "Strength", i: "VIII", z: "Leo", e: "Fire", type: "Major", u: "Courage, persuasion, influence.", r: "Self-doubt, low energy." },
+            { n: "The Hermit", i: "IX", z: "Virgo", e: "Earth", type: "Major", u: "Introspection, soul-searching, solitude.", r: "Isolation, loneliness." },
+            { n: "The Wheel", i: "X", z: "Jupiter", e: "Fire", type: "Major", u: "Good luck, destiny, life cycles.", r: "Bad luck, resistance to change." },
+            { n: "Justice", i: "XI", z: "Libra", e: "Air", type: "Major", u: "Truth, fairness, cause and effect.", r: "Unfairness, lack of accountability." },
+            { n: "Hanged Man", i: "XII", z: "Neptune", e: "Water", type: "Major", u: "Pause, surrender, new perspective.", r: "Stalling, resistance." },
+            { n: "Death", i: "XIII", z: "Scorpio", e: "Water", type: "Major", u: "Endings, change, transformation.", r: "Resistance to change." },
+            { n: "Temperance", i: "XIV", z: "Sagittarius", e: "Fire", type: "Major", u: "Balance, moderation, patience.", r: "Imbalance, excess." },
+            { n: "The Devil", i: "XV", z: "Capricorn", e: "Earth", type: "Major", u: "Shadow self, attachment, addiction.", r: "Releasing limiting beliefs." },
+            { n: "The Tower", i: "XVI", z: "Mars", e: "Fire", type: "Major", u: "Sudden upheaval, revelation.", r: "Personal transformation." },
+            { n: "The Star", i: "XVII", z: "Aquarius", e: "Air", type: "Major", u: "Hope, faith, renewal, purpose.", r: "Despair, lack of faith." },
+            { n: "The Moon", i: "XVIII", z: "Pisces", e: "Water", type: "Major", u: "Illusion, fear, intuition.", r: "Release of fear, repressed emotion." },
+            { n: "The Sun", i: "XIX", z: "Sun", e: "Fire", type: "Major", u: "Positivity, fun, warmth, vitality.", r: "Inner child, feeling down." },
+            { n: "Judgement", i: "XX", z: "Pluto", e: "Fire/Water", type: "Major", u: "Rebirth, calling, absolution.", r: "Self-doubt, inner critic." },
+            { n: "The World", i: "XXI", z: "Saturn", e: "Earth", type: "Major", u: "Completion, integration, travel.", r: "Seeking closure." }
         ];
 
         const SUITS = [
-            { name: "Wands", i: "🜂", e: "Fire", z: "Leo/Sag" },
-            { name: "Cups", i: "🜄", e: "Water", z: "Pisces/Scorp" },
-            { name: "Swords", i: "🜁", e: "Air", z: "Aqua/Gemini" },
-            { name: "Pentacles", i: "🜃", e: "Earth", z: "Cap/Taurus" }
+            { name: "Wands", e: "Fire", z: "Leo/Sag", c: "var(--wands)" },
+            { name: "Cups", e: "Water", z: "Pisces/Scorp", c: "var(--cups)" },
+            { name: "Swords", e: "Air", z: "Aqua/Gemini", c: "var(--swords)" },
+            { name: "Pentacles", e: "Earth", z: "Cap/Taurus", c: "var(--pents)" }
         ];
 
         const RANKS = ["Ace", "2", "3", "4", "5", "6", "7", "8", "9", "10", "Page", "Knight", "Queen", "King"];
@@ -362,10 +448,11 @@
                 DECK.push({
                     n: `${rank} of ${suit.name}`,
                     i: rank,
-                    s: suit.i,
                     z: suit.z,
                     e: suit.e,
-                    u: `The essence of ${suit.name.toLowerCase()} in its ${rank} phase. Focused on ${suit.e} energy.`,
+                    type: suit.name,
+                    glow: suit.c,
+                    u: `${rank} of ${suit.name} represents ${suit.e} energy in its ${rank} phase.`,
                     r: `Internalized or blocked ${suit.name.toLowerCase()} energy.`
                 });
             });
@@ -375,59 +462,51 @@
             nav(id) {
                 document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
                 document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
-                
                 const tab = document.getElementById('tab-' + id);
                 const view = document.getElementById('view-' + id);
                 if (tab) tab.classList.add('active');
                 if (view) view.style.display = 'block';
-
                 if(id === 'deck') this.renderLibrary();
             },
 
             draw() {
+                const selectedSign = document.getElementById('user-zodiac').value;
+                const userElement = ZODIAC_DATA[selectedSign] || null;
                 const display = document.getElementById('reading-display');
                 const outcome = document.getElementById('reading-outcome');
-                const spreadData = [...DECK].sort(() => Math.random() - 0.5).slice(0, 3);
-                
-                const spread = spreadData.map(c => ({
-                    ...c,
-                    isRev: Math.random() > 0.5
+                const spread = [...DECK].sort(() => Math.random() - 0.5).slice(0, 3).map(c => ({
+                    ...c, isRev: Math.random() > 0.5
                 }));
                 
                 display.innerHTML = `<div class="spread-row">` + spread.map((c, idx) => `
                     <div class="slot">
                         <div class="slot-title">${['Past', 'Present', 'Future'][idx]}</div>
-                        <div class="essential-card ${c.isRev ? 'rev' : ''}" onclick="oracle.open('${c.n}', '${c.s}', '${c.u.replace(/'/g, "\\'")}', '${c.r.replace(/'/g, "\\'")}', ${c.isRev}, '${c.z}', '${c.i}')">
+                        <div class="essential-card ${c.isRev ? 'rev' : ''}" onclick="oracle.open('${c.n}', '${c.type}', '${c.u.replace(/'/g, "\\'")}', '${c.r.replace(/'/g, "\\'")}', ${c.isRev}, '${c.z}', '${c.i}', '${c.glow || 'var(--major)'}')">
+                            <div class="card-glow" style="background:${c.glow || 'var(--major)'}"></div>
                             <div class="card-frame"></div>
-                            <div class="card-symbol-bg">${c.s}</div>
                             <div class="card-num">${c.i}</div>
-                            <div class="card-art">${c.s}</div>
+                            <div class="card-art-container">${SVG_ART[c.type]}</div>
                             <div class="card-label">${c.n}</div>
                         </div>
                     </div>
                 `).join('') + `</div>`;
 
                 const elements = spread.map(c => c.e);
-                const counts = elements.reduce((acc, el) => { acc[el] = (acc[el] || 0) + 1; return acc; }, {});
-                const dominantEl = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
+                const dominantEl = Object.keys(elements.reduce((acc, el) => { acc[el] = (acc[el] || 0) + 1; return acc; }, {})).reduce((a, b) => a > b ? a : b);
 
-                let summary = `Your spread carries the weight of **${dominantEl}** energy. `;
-                
-                if (spread[1].isRev) {
-                    summary += `Currently, the ${spread[1].n} is internalized; you are processing a secret or a quiet transformation. `;
+                let summary = "";
+                if (selectedSign) {
+                    summary += `As a **${selectedSign}**, your **${userElement}** nature meets a reading rich in **${dominantEl}** power. `;
                 } else {
-                    summary += `The ${spread[1].n} suggests your current path is fully visible and active. `;
+                    summary += `This path is anchored in **${dominantEl}** energy. `;
                 }
 
-                summary += `Looking forward, the influence of **${spread[2].z}** indicates that your future depends on the resolution of the ${spread[0].n} in your history.`;
+                if (spread[1].isRev) summary += `The reversed ${spread[1].n} suggests you are currently processing a silent, internal rebirth. `;
+                else summary += `The ${spread[1].n} indicates your current intentions are manifesting clearly in the physical world. `;
 
-                outcome.innerHTML = `
-                    <div class="outcome-box">
-                        <span class="outcome-title">Oracle Synthesis</span>
-                        <p class="outcome-text">${summary}</p>
-                    </div>
-                `;
+                summary += `The influence of **${spread[2].z}** on your future reveals that your outcome depends on the lessons of the ${spread[0].n} in your history.`;
 
+                outcome.innerHTML = `<div class="outcome-box"><span class="outcome-title">Oracle Proclamation</span><p class="outcome-text">${summary}</p></div>`;
                 this.nav('reading');
             },
 
@@ -437,39 +516,38 @@
                     <div class="flip-container" id="card-${idx}" onclick="this.classList.toggle('flipped')">
                         <div class="flipper">
                             <div class="card-front">
+                                <div class="card-glow" style="background:${c.glow || 'var(--major)'}"></div>
                                 <div class="card-frame"></div>
-                                <div class="card-num" style="top:10px">${c.i}</div>
-                                <div class="card-art" style="font-size: 24px; filter:grayscale(1); opacity:0.8">${c.s}</div>
+                                <div class="card-num" style="top:12px">${c.i}</div>
+                                <div class="card-art-container" style="height:40%; opacity:0.8">${SVG_ART[c.type]}</div>
                                 <div class="card-label" style="font-size: 7px;">${c.n}</div>
-                                <div style="position: absolute; bottom: 12px; font-size: 6px; opacity: 0.2; letter-spacing: 2px;">FLIP</div>
+                                <div style="position: absolute; bottom: 10px; font-size: 6px; opacity: 0.3; letter-spacing: 2px;">FLIP</div>
                             </div>
                             <div class="card-back">
-                                <div class="card-back-pattern">
-                                    <div class="card-back-symbol">❂</div>
-                                </div>
-                                <div style="font-weight: bold; margin-bottom: 8px; color: var(--gold); font-size: 10px; z-index:5; letter-spacing:1px; text-transform:uppercase;">${c.n}</div>
-                                <div style="font-style: italic; z-index:5; font-size:10px; padding:0 5px;">${c.u.substring(0, 50)}...</div>
-                                <div style="margin-top: 15px; font-size: 7px; opacity: 0.6; z-index:5; letter-spacing:1px;">${c.z}</div>
+                                <div class="card-back-pattern"></div>
+                                <div style="font-weight: bold; margin-bottom: 8px; color: var(--gold); font-size: 10px; z-index:5;">${c.n}</div>
+                                <div style="font-style: italic; z-index:5; font-size:9px; padding:0 8px;">${c.u.substring(0, 45)}...</div>
                             </div>
                         </div>
                     </div>
                 `).join('');
             },
 
-            open(n, s, u, r, isRev, z, num) {
+            open(n, type, u, r, isRev, z, num, glow) {
                 const content = document.getElementById('sheet-content');
                 content.innerHTML = `
-                    <div class="reading-detail-card" style="${isRev ? 'transform: rotate(180deg);' : ''}">
+                    <div class="detail-card-visual" style="${isRev ? 'transform: rotate(180deg);' : ''}">
+                         <div class="card-glow" style="background:${glow}"></div>
                          <div class="card-frame" style="border-color: var(--gold-dim)"></div>
-                         <div class="card-num" style="top:15px; font-size:12px;">${num}</div>
-                         <div style="font-size: 50px; margin-bottom: 15px; filter: grayscale(1);">${s}</div>
-                         <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing:1px;">${n}</div>
+                         <div class="card-num" style="top:18px; font-size:12px;">${num}</div>
+                         <div class="card-art-container" style="width:70%; height:60%;">${SVG_ART[type]}</div>
+                         <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing:1px; z-index:10">${n}</div>
                     </div>
-                    <h2 style="margin: 0; font-size: 22px; color: var(--paper); letter-spacing:1px; text-transform:uppercase;">${n}</h2>
+                    <h2 style="margin: 0; font-size: 22px; color: var(--paper); text-transform:uppercase;">${n}</h2>
                     <div class="zodiac-tag">${z}</div>
-                    <div style="text-align: left; margin-top: 35px; border-top: 0.5px solid var(--border); pt-30">
-                        <p style="color: var(--gold); font-size: 10px; font-weight: 700; margin-top:20px; margin-bottom: 12px; letter-spacing: 2px;">THE MESSAGE</p>
-                        <p style="font-size: 17px; line-height: 1.8; color: #ddd; font-weight:300;">${isRev ? r : u}</p>
+                    <div style="text-align: left; margin-top: 35px; border-top: 0.5px solid var(--border); padding-top:20px">
+                        <p style="color: var(--gold); font-size: 10px; font-weight: 700; margin-bottom: 12px; letter-spacing: 2px;">THE MESSAGE</p>
+                        <p style="font-size: 16px; line-height: 1.7; color: #ddd; font-weight:300;">${isRev ? r : u}</p>
                     </div>
                 `;
                 document.getElementById('modal').style.display = 'flex';
@@ -482,7 +560,7 @@
             }
         };
 
-        window.addEventListener('load', () => {
+        window.addEventListener('DOMContentLoaded', () => {
             oracle.nav('home');
         });
     </script>
