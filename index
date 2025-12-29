@@ -1,310 +1,240 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Shuffle, Info, LayoutGrid, Eye, RotateCw } from 'lucide-react';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tarot Oracle</title>
+    <!-- React and ReactDOM CDNs -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <!-- Babel for JSX transpilation -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap');
+        .font-serif { font-family: 'Cinzel', serif; }
+        .perspective-1000 { perspective: 1000px; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes zoomIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        .animate-in { animation: fadeIn 0.5s ease-out forwards; }
+        .zoom-in { animation: zoomIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100">
+    <div id="root"></div>
 
-// --- Tarot Deck Data (Full 78 Cards) ---
-const TAROT_DECK = [
-  // Major Arcana
-  { id: 0, name: "The Fool", arcana: "Major", suit: null, img: "🃏", upright: "New beginnings, optimism, trust in life.", reversed: "Recklessness, risk-taking, consideration." },
-  { id: 1, name: "The Magician", arcana: "Major", suit: null, img: "🪄", upright: "Action, power, manifestation.", reversed: "Manipulation, poor planning, untapped talents." },
-  { id: 2, name: "The High Priestess", arcana: "Major", suit: null, img: "🌙", upright: "Intuition, sacred knowledge, subconscious mind.", reversed: "Secrets, disconnected from intuition, withdrawal." },
-  { id: 3, name: "The Empress", arcana: "Major", suit: null, img: "🌿", upright: "Femininity, beauty, nature, abundance.", reversed: "Creative block, dependence on others." },
-  { id: 4, name: "The Emperor", arcana: "Major", suit: null, img: "👑", upright: "Authority, establishment, structure.", reversed: "Domination, excessive control, rigidity." },
-  { id: 5, name: "The Hierophant", arcana: "Major", suit: null, img: "🏛️", upright: "Spiritual wisdom, religious beliefs, tradition.", reversed: "Personal beliefs, freedom, challenging the status quo." },
-  { id: 6, name: "The Lovers", arcana: "Major", suit: null, img: "❤️", upright: "Love, harmony, relationships, choices.", reversed: "Self-love, disharmony, imbalance, misalignment." },
-  { id: 7, name: "The Chariot", arcana: "Major", suit: null, img: "⚔️", upright: "Control, willpower, success, action.", reversed: "Self-discipline, opposition, lack of direction." },
-  { id: 8, name: "Strength", arcana: "Major", suit: null, img: "🦁", upright: "Strength, courage, persuasion, influence.", reversed: "Inner strength, self-doubt, low energy." },
-  { id: 9, name: "The Hermit", arcana: "Major", suit: null, img: "🏮", upright: "Soul-searching, introspection, being alone.", reversed: "Isolation, loneliness, withdrawal." },
-  { id: 10, name: "Wheel of Fortune", arcana: "Major", suit: null, img: "🎡", upright: "Good luck, karma, life cycles, destiny.", reversed: "Bad luck, resistance to change, breaking cycles." },
-  { id: 11, name: "Justice", arcana: "Major", suit: null, img: "⚖️", upright: "Justice, fairness, truth, cause and effect.", reversed: "Unfairness, lack of accountability, dishonesty." },
-  { id: 12, name: "The Hanged Man", arcana: "Major", suit: null, img: "👣", upright: "Pause, surrender, letting go, new perspectives.", reversed: "Delays, resistance, stalling, indecision." },
-  { id: 13, name: "Death", arcana: "Major", suit: null, img: "💀", upright: "Endings, change, transformation, transition.", reversed: "Resistance to change, personal transformation, inner purging." },
-  { id: 14, name: "Temperance", arcana: "Major", suit: null, img: "🍷", upright: "Balance, moderation, patience, purpose.", reversed: "Imbalance, excess, self-healing, re-alignment." },
-  { id: 15, name: "The Devil", arcana: "Major", suit: null, img: "🔥", upright: "Shadow self, attachment, addiction, restriction.", reversed: "Releasing limiting beliefs, exploring dark thoughts, detachment." },
-  { id: 16, name: "The Tower", arcana: "Major", suit: null, img: "⚡", upright: "Sudden change, upheaval, chaos, revelation.", reversed: "Personal transformation, fear of change, averting disaster." },
-  { id: 17, name: "The Star", arcana: "Major", suit: null, img: "✨", upright: "Hope, faith, purpose, renewal, spirituality.", reversed: "Lack of faith, despair, self-trust, disconnection." },
-  { id: 18, name: "The Moon", arcana: "Major", suit: null, img: "🌒", upright: "Illusion, fear, anxiety, subconscious, intuition.", reversed: "Release of fear, repressed emotion, inner confusion." },
-  { id: 19, name: "The Sun", arcana: "Major", suit: null, img: "☀️", upright: "Positivity, fun, warmth, success, vitality.", reversed: "Inner child, feeling down, overly optimistic." },
-  { id: 20, name: "Judgement", arcana: "Major", suit: null, img: "🎺", upright: "Judgement, rebirth, inner calling, absolution.", reversed: "Self-doubt, inner-critic, ignoring the call." },
-  { id: 21, name: "The World", arcana: "Major", suit: null, img: "🌍", upright: "Completion, integration, accomplishment, travel.", reversed: "Seeking personal closure, short-cuts, delays." },
-  
-  // Minor Arcana - Simplified set for the 4 suits
-  ...["Wands", "Cups", "Swords", "Pentacles"].flatMap((suit, suitIdx) => 
-    ["Ace", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Page", "Knight", "Queen", "King"].map((rank, rankIdx) => ({
-      id: 22 + (suitIdx * 14) + rankIdx,
-      name: `${rank} of ${suit}`,
-      arcana: "Minor",
-      suit: suit,
-      img: suit === "Wands" ? "🔥" : suit === "Cups" ? "💧" : suit === "Swords" ? "💨" : "⛰️",
-      upright: `${rank} of ${suit} represents ${suit === "Wands" ? "energy and passion" : suit === "Cups" ? "emotion and love" : suit === "Swords" ? "intellect and conflict" : "finances and health"} in an active state.`,
-      reversed: `The reversed ${rank} of ${suit} suggests blocked energy or internal struggles regarding ${suit.toLowerCase()}.`
-    }))
-  )
-];
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
 
-const App = () => {
-  const [view, setView] = useState('home'); // 'home', 'reading', 'deck'
-  const [deck, setDeck] = useState([...TAROT_DECK]);
-  const [spread, setSpread] = useState([]);
-  const [isShuffling, setIsShuffling] = useState(false);
-  const [selectedCard, setSelectedCard] = useState(null);
+        // --- Custom SVG Icons (Replacing Lucide for standalone compatibility) ---
+        const Icon = ({ name, size = 24, className = "" }) => {
+            const icons = {
+                shuffle: <path d="M2 18L6 14M2 6L22 18M22 6L16 10M12 12L22 18M12 12L6 14M2 18L10 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>,
+                info: (
+                    <>
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
+                        <path d="M12 16v-4" stroke="currentColor" strokeWidth="2"/>
+                        <path d="M12 8h.01" stroke="currentColor" strokeWidth="2"/>
+                    </>
+                ),
+                layout: (
+                    <>
+                        <rect x="3" y="3" width="7" height="7" stroke="currentColor" strokeWidth="2"/>
+                        <rect x="14" y="3" width="7" height="7" stroke="currentColor" strokeWidth="2"/>
+                        <rect x="14" y="14" width="7" height="7" stroke="currentColor" strokeWidth="2"/>
+                        <rect x="3" y="14" width="7" height="7" stroke="currentColor" strokeWidth="2"/>
+                    </>
+                ),
+                eye: (
+                    <>
+                        <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" stroke="currentColor" strokeWidth="2"/>
+                        <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2"/>
+                    </>
+                ),
+                rotate: (
+                    <>
+                        <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.85.83 6.72 2.24" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                        <path d="M21 3v5h-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                    </>
+                )
+            };
+            return (
+                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
+                    {icons[name] || null}
+                </svg>
+            );
+        };
 
-  // Shuffle logic
-  const shuffleDeck = () => {
-    setIsShuffling(true);
-    setTimeout(() => {
-      let shuffled = [...TAROT_DECK]
-        .map(value => ({ value, sort: Math.random() }))
-        .sort((a, b) => a.sort - b.sort)
-        .map(({ value }) => ({
-          ...value,
-          isReversed: Math.random() > 0.7 // 30% chance of being reversed
-        }));
-      setDeck(shuffled);
-      setIsShuffling(false);
-    }, 1000);
-  };
+        // --- Tarot Deck Data ---
+        const TAROT_DECK = [
+            { id: 0, name: "The Fool", arcana: "Major", img: "🃏", upright: "New beginnings, optimism, trust in life.", reversed: "Recklessness, risk-taking, consideration." },
+            { id: 1, name: "The Magician", arcana: "Major", img: "🪄", upright: "Action, power, manifestation.", reversed: "Manipulation, poor planning, untapped talents." },
+            { id: 2, name: "The High Priestess", arcana: "Major", img: "🌙", upright: "Intuition, sacred knowledge, subconscious mind.", reversed: "Secrets, disconnected from intuition, withdrawal." },
+            { id: 3, name: "The Empress", arcana: "Major", img: "🌿", upright: "Femininity, beauty, nature, abundance.", reversed: "Creative block, dependence on others." },
+            { id: 4, name: "The Emperor", arcana: "Major", img: "👑", upright: "Authority, establishment, structure.", reversed: "Domination, excessive control, rigidity." },
+            { id: 5, name: "The Hierophant", arcana: "Major", img: "🏛️", upright: "Spiritual wisdom, religious beliefs, tradition.", reversed: "Personal beliefs, freedom, challenging the status quo." },
+            { id: 6, name: "The Lovers", arcana: "Major", img: "❤️", upright: "Love, harmony, relationships, choices.", reversed: "Self-love, disharmony, imbalance, misalignment." },
+            { id: 7, name: "The Chariot", arcana: "Major", img: "⚔️", upright: "Control, willpower, success, action.", reversed: "Self-discipline, opposition, lack of direction." },
+            { id: 8, name: "Strength", arcana: "Major", img: "🦁", upright: "Strength, courage, persuasion, influence.", reversed: "Inner strength, self-doubt, low energy." },
+            { id: 9, name: "The Hermit", arcana: "Major", img: "🏮", upright: "Soul-searching, introspection, being alone.", reversed: "Isolation, loneliness, withdrawal." },
+            { id: 10, name: "Wheel of Fortune", arcana: "Major", img: "🎡", upright: "Good luck, karma, life cycles, destiny.", reversed: "Bad luck, resistance to change, breaking cycles." },
+            { id: 11, name: "Justice", arcana: "Major", img: "⚖️", upright: "Justice, fairness, truth, cause and effect.", reversed: "Unfairness, lack of accountability, dishonesty." },
+            { id: 12, name: "The Hanged Man", arcana: "Major", img: "👣", upright: "Pause, surrender, letting go, new perspectives.", reversed: "Delays, resistance, stalling, indecision." },
+            { id: 13, name: "Death", arcana: "Major", img: "💀", upright: "Endings, change, transformation, transition.", reversed: "Resistance to change, personal transformation, inner purging." },
+            { id: 14, name: "Temperance", arcana: "Major", img: "🍷", upright: "Balance, moderation, patience, purpose.", reversed: "Imbalance, excess, self-healing, re-alignment." },
+            { id: 15, name: "The Devil", arcana: "Major", img: "🔥", upright: "Shadow self, attachment, addiction, restriction.", reversed: "Releasing limiting beliefs, exploring dark thoughts, detachment." },
+            { id: 16, name: "The Tower", arcana: "Major", img: "⚡", upright: "Sudden change, upheaval, chaos, revelation.", reversed: "Personal transformation, fear of change, averting disaster." },
+            { id: 17, name: "The Star", arcana: "Major", img: "✨", upright: "Hope, faith, purpose, renewal, spirituality.", reversed: "Lack of faith, despair, self-trust, disconnection." },
+            { id: 18, name: "The Moon", arcana: "Major", img: "🌒", upright: "Illusion, fear, anxiety, subconscious, intuition.", reversed: "Release of fear, repressed emotion, inner confusion." },
+            { id: 19, name: "The Sun", arcana: "Major", img: "☀️", upright: "Positivity, fun, warmth, success, vitality.", reversed: "Inner child, feeling down, overly optimistic." },
+            { id: 20, name: "Judgement", arcana: "Major", img: "🎺", upright: "Judgement, rebirth, inner calling, absolution.", reversed: "Self-doubt, inner-critic, ignoring the call." },
+            { id: 21, name: "The World", arcana: "Major", img: "🌍", upright: "Completion, integration, accomplishment, travel.", reversed: "Seeking personal closure, short-cuts, delays." },
+            // Minor Arcana
+            ...["Wands", "Cups", "Swords", "Pentacles"].flatMap((suit, suitIdx) => 
+                ["Ace", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Page", "Knight", "Queen", "King"].map((rank, rankIdx) => ({
+                    id: 22 + (suitIdx * 14) + rankIdx,
+                    name: `${rank} of ${suit}`,
+                    arcana: "Minor",
+                    suit: suit,
+                    img: suit === "Wands" ? "🔥" : suit === "Cups" ? "💧" : suit === "Swords" ? "💨" : "⛰️",
+                    upright: `${rank} of ${suit} represents ${suit === "Wands" ? "energy" : suit === "Cups" ? "emotion" : suit === "Swords" ? "intellect" : "finance"} in an active state.`,
+                    reversed: `The reversed ${rank} of ${suit} suggests blocked energy regarding ${suit.toLowerCase()}.`
+                }))
+            )
+        ];
 
-  const drawSpread = () => {
-    shuffleDeck();
-    setTimeout(() => {
-      const drawn = deck.slice(0, 3);
-      setSpread(drawn);
-      setView('reading');
-    }, 1100);
-  };
+        const App = () => {
+            const [view, setView] = useState('home');
+            const [spread, setSpread] = useState([]);
+            const [isShuffling, setIsShuffling] = useState(false);
+            const [selectedCard, setSelectedCard] = useState(null);
 
-  const Card = ({ card, size = "md", reveal = true, onClick }) => {
-    const isMd = size === "md";
-    return (
-      <div 
-        onClick={onClick}
-        className={`relative transition-all duration-500 transform cursor-pointer group
-          ${isMd ? 'w-40 h-64' : 'w-24 h-40'} 
-          ${card.isReversed && reveal ? 'rotate-180' : ''}
-          perspective-1000`}
-      >
-        <div className={`w-full h-full rounded-xl shadow-2xl border-2 border-amber-900/30 bg-indigo-950 flex flex-col items-center justify-center p-4 text-center overflow-hidden
-          ${reveal ? 'bg-gradient-to-br from-indigo-900 to-purple-900' : 'bg-slate-900'}`}>
-          
-          {reveal ? (
-            <>
-              <div className="text-4xl mb-4">{card.img}</div>
-              <h3 className={`font-serif font-bold text-amber-200 leading-tight ${isMd ? 'text-lg' : 'text-xs'}`}>
-                {card.name}
-              </h3>
-              <p className="text-[10px] text-amber-400/60 uppercase mt-1 tracking-widest">{card.arcana}</p>
-              {card.isReversed && (
-                <span className="absolute bottom-2 text-[8px] uppercase text-amber-500/50">Reversed</span>
-              )}
-            </>
-          ) : (
-            <div className="flex items-center justify-center opacity-20">
-              <Eye size={48} className="text-amber-200" />
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
+            const drawSpread = () => {
+                setIsShuffling(true);
+                setTimeout(() => {
+                    const shuffled = [...TAROT_DECK]
+                        .sort(() => Math.random() - 0.5)
+                        .slice(0, 3)
+                        .map(c => ({ ...c, isReversed: Math.random() > 0.7 }));
+                    setSpread(shuffled);
+                    setView('reading');
+                    setIsShuffling(false);
+                }, 1000);
+            };
 
-  return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-amber-500/30">
-      {/* Navigation */}
-      <nav className="fixed top-0 w-full z-50 bg-slate-950/80 backdrop-blur-md border-b border-amber-900/20 px-6 py-4 flex justify-between items-center">
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => setView('home')}>
-          <div className="p-2 bg-amber-600 rounded-lg shadow-lg shadow-amber-900/20">
-            <Eye className="text-white" size={20} />
-          </div>
-          <span className="text-xl font-serif font-bold tracking-tight text-amber-100">Tarot Oracle</span>
-        </div>
-        <div className="flex gap-4 sm:gap-6">
-          <button onClick={() => setView('reading')} className={`text-sm flex items-center gap-1 ${view === 'reading' ? 'text-amber-400' : 'text-slate-400'}`}>
-            <LayoutGrid size={16} /> <span className="hidden sm:inline">Reading</span>
-          </button>
-          <button onClick={() => setView('deck')} className={`text-sm flex items-center gap-1 ${view === 'deck' ? 'text-amber-400' : 'text-slate-400'}`}>
-            <Info size={16} /> <span className="hidden sm:inline">The Deck</span>
-          </button>
-        </div>
-      </nav>
-
-      <main className="pt-24 pb-12 px-6 max-w-6xl mx-auto">
-        
-        {/* Home View */}
-        {view === 'home' && (
-          <div className="flex flex-col items-center text-center mt-12 sm:mt-24 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
-            <h1 className="text-5xl sm:text-7xl font-serif font-bold text-transparent bg-clip-text bg-gradient-to-b from-amber-100 to-amber-500 leading-tight">
-              Seek Ancient Wisdom
-            </h1>
-            <p className="text-slate-400 max-w-lg text-lg leading-relaxed">
-              Step into the realm of intuition. Consult the oracle for guidance on your past, present, and the path that lies ahead.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 pt-4 w-full sm:w-auto">
-              <button 
-                onClick={drawSpread}
-                className="px-8 py-4 bg-amber-600 hover:bg-amber-500 text-white rounded-full font-bold shadow-xl shadow-amber-900/20 transition-all flex items-center justify-center gap-2"
-              >
-                {isShuffling ? <RotateCw className="animate-spin" /> : <Shuffle />}
-                Get a Reading
-              </button>
-              <button 
-                onClick={() => setView('deck')}
-                className="px-8 py-4 bg-slate-800 hover:bg-slate-700 text-white rounded-full font-bold transition-all"
-              >
-                Explore Deck
-              </button>
-            </div>
-            
-            <div className="grid grid-cols-3 gap-4 pt-12 opacity-40">
-              <div className="w-24 h-36 border border-amber-500/20 rounded-xl bg-indigo-950/20 rotate-[-12deg]"></div>
-              <div className="w-24 h-36 border border-amber-500/20 rounded-xl bg-indigo-950/20 translate-y-[-10px]"></div>
-              <div className="w-24 h-36 border border-amber-500/20 rounded-xl bg-indigo-950/20 rotate-[12deg]"></div>
-            </div>
-          </div>
-        )}
-
-        {/* Reading View */}
-        {view === 'reading' && (
-          <div className="space-y-12 animate-in fade-in duration-500">
-            <div className="text-center">
-              <h2 className="text-3xl font-serif font-bold text-amber-200">The Three Card Spread</h2>
-              <p className="text-slate-400 mt-2">Past • Present • Future</p>
-            </div>
-
-            <div className="flex flex-wrap justify-center gap-8 py-8">
-              {spread.length > 0 ? (
-                spread.map((card, i) => (
-                  <div key={i} className="flex flex-col items-center space-y-6 animate-in zoom-in slide-in-from-bottom-10 duration-700" style={{ animationDelay: `${i * 200}ms` }}>
-                    <div className="text-amber-500 font-serif font-bold text-xl opacity-60">
-                      {i === 0 ? "The Past" : i === 1 ? "The Present" : "The Future"}
+            const Card = ({ card, size = "md", reveal = true, onClick }) => {
+                const isMd = size === "md";
+                return (
+                    <div 
+                        onClick={onClick}
+                        className={`relative transition-all duration-500 transform cursor-pointer
+                            ${isMd ? 'w-40 h-64' : 'w-24 h-40'} 
+                            ${card.isReversed && reveal ? 'rotate-180' : ''}
+                            perspective-1000`}
+                    >
+                        <div className={`w-full h-full rounded-xl shadow-2xl border-2 border-amber-900/30 flex flex-col items-center justify-center p-4 text-center overflow-hidden
+                            ${reveal ? 'bg-gradient-to-br from-indigo-900 to-purple-900' : 'bg-slate-900'}`}>
+                            {reveal ? (
+                                <>
+                                    <div className="text-4xl mb-4">{card.img}</div>
+                                    <h3 className={`font-serif font-bold text-amber-200 leading-tight ${isMd ? 'text-lg' : 'text-xs'}`}>{card.name}</h3>
+                                    <p className="text-[10px] text-amber-400/60 uppercase mt-1 tracking-widest">{card.arcana}</p>
+                                </>
+                            ) : (
+                                <div className="opacity-20"><Icon name="eye" size={48} className="text-amber-200" /></div>
+                            )}
+                        </div>
                     </div>
-                    <Card card={card} onClick={() => setSelectedCard(card)} />
-                    <div className="max-w-[180px] text-center">
-                      <p className="text-xs text-slate-300 leading-relaxed italic">
-                        {card.isReversed ? card.reversed : card.upright}
-                      </p>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="flex flex-col items-center gap-8">
-                  <div className="flex gap-4">
-                    <div className="w-40 h-64 border-2 border-dashed border-amber-900/20 rounded-xl bg-slate-900/50 flex items-center justify-center text-amber-900/40">1</div>
-                    <div className="w-40 h-64 border-2 border-dashed border-amber-900/20 rounded-xl bg-slate-900/50 flex items-center justify-center text-amber-900/40">2</div>
-                    <div className="w-40 h-64 border-2 border-dashed border-amber-900/20 rounded-xl bg-slate-900/50 flex items-center justify-center text-amber-900/40">3</div>
-                  </div>
-                  <button 
-                    onClick={drawSpread}
-                    disabled={isShuffling}
-                    className="px-6 py-3 bg-amber-600 text-white rounded-full flex items-center gap-2 hover:bg-amber-500 transition-colors disabled:opacity-50"
-                  >
-                    {isShuffling ? <RotateCw className="animate-spin" /> : <Shuffle size={20} />}
-                    {isShuffling ? "Shuffling Fate..." : "Shuffle & Draw"}
-                  </button>
+                );
+            };
+
+            return (
+                <div className="min-h-screen bg-slate-950">
+                    <nav className="fixed top-0 w-full z-50 bg-slate-950/80 backdrop-blur-md border-b border-amber-900/20 px-6 py-4 flex justify-between items-center">
+                        <div className="flex items-center gap-2 cursor-pointer" onClick={() => setView('home')}>
+                            <div className="p-2 bg-amber-600 rounded-lg"><Icon name="eye" size={20} className="text-white" /></div>
+                            <span className="text-xl font-serif font-bold text-amber-100">Tarot Oracle</span>
+                        </div>
+                        <div className="flex gap-6">
+                            <button onClick={() => setView('reading')} className={`text-sm flex items-center gap-1 ${view === 'reading' ? 'text-amber-400' : 'text-slate-400'}`}>
+                                <Icon name="layout" size={16} /> Reading
+                            </button>
+                            <button onClick={() => setView('deck')} className={`text-sm flex items-center gap-1 ${view === 'deck' ? 'text-amber-400' : 'text-slate-400'}`}>
+                                <Icon name="info" size={16} /> The Deck
+                            </button>
+                        </div>
+                    </nav>
+
+                    <main className="pt-24 pb-12 px-6 max-w-6xl mx-auto">
+                        {view === 'home' && (
+                            <div className="flex flex-col items-center text-center mt-24 space-y-8 animate-in">
+                                <h1 className="text-5xl sm:text-7xl font-serif font-bold text-transparent bg-clip-text bg-gradient-to-b from-amber-100 to-amber-500">
+                                    Seek Ancient Wisdom
+                                </h1>
+                                <p className="text-slate-400 max-w-lg text-lg">Consult the oracle for guidance on your past, present, and future path.</p>
+                                <button onClick={drawSpread} className="px-8 py-4 bg-amber-600 hover:bg-amber-500 rounded-full font-bold flex items-center gap-2 transition-all">
+                                    {isShuffling ? <Icon name="rotate" className="animate-spin" /> : <Icon name="shuffle" />} Get a Reading
+                                </button>
+                            </div>
+                        )}
+
+                        {view === 'reading' && (
+                            <div className="space-y-12 animate-in text-center">
+                                <h2 className="text-3xl font-serif font-bold text-amber-200">The Three Card Spread</h2>
+                                <div className="flex flex-wrap justify-center gap-8 py-8">
+                                    {spread.map((card, i) => (
+                                        <div key={i} className="flex flex-col items-center space-y-6 zoom-in" style={{ animationDelay: `${i * 200}ms` }}>
+                                            <div className="text-amber-500 font-serif font-bold text-xl opacity-60">
+                                                {i === 0 ? "Past" : i === 1 ? "Present" : "Future"}
+                                            </div>
+                                            <Card card={card} onClick={() => setSelectedCard(card)} />
+                                            <p className="max-w-[180px] text-xs text-slate-300 italic">{card.isReversed ? card.reversed : card.upright}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                                <button onClick={drawSpread} className="px-6 py-2 border border-amber-600 text-amber-500 rounded-full uppercase text-xs font-bold tracking-widest hover:bg-amber-600 hover:text-white transition-all">Redraw</button>
+                            </div>
+                        )}
+
+                        {view === 'deck' && (
+                            <div className="space-y-8 animate-in">
+                                <h2 className="text-4xl font-serif font-bold text-amber-200 border-b border-amber-900/20 pb-4">The Sacred Deck</h2>
+                                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-6">
+                                    {TAROT_DECK.map(card => (
+                                        <div key={card.id} className="flex flex-col items-center">
+                                            <Card card={card} size="sm" onClick={() => setSelectedCard(card)} />
+                                            <span className="text-[10px] text-slate-500 mt-2 text-center uppercase truncate w-full">{card.name}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </main>
+
+                    {selectedCard && (
+                        <div className="fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-6 animate-in" onClick={() => setSelectedCard(null)}>
+                            <div className="bg-indigo-950 border border-amber-400/30 rounded-3xl p-8 max-w-2xl w-full flex flex-col md:flex-row gap-8 relative" onClick={e => e.stopPropagation()}>
+                                <div className="flex-shrink-0 flex flex-col items-center">
+                                    <div className={`w-48 h-80 rounded-2xl bg-gradient-to-br from-indigo-900 to-purple-900 border-2 border-amber-400/40 flex flex-col items-center justify-center p-6 text-center ${selectedCard.isReversed ? 'rotate-180' : ''}`}>
+                                        <div className="text-6xl mb-6">{selectedCard.img}</div>
+                                        <h3 className="text-2xl font-serif font-bold text-amber-200">{selectedCard.name}</h3>
+                                    </div>
+                                    <button onClick={() => setSelectedCard(null)} className="mt-6 w-full py-2 bg-slate-900 rounded-lg text-sm text-slate-400">Close</button>
+                                </div>
+                                <div className="flex-grow space-y-6">
+                                    <div><h4 className="text-amber-100 font-bold uppercase text-[10px] mb-2">Upright</h4><p className="text-slate-300 italic">"{selectedCard.upright}"</p></div>
+                                    <div><h4 className="text-amber-100 font-bold uppercase text-[10px] mb-2">Reversed</h4><p className="text-slate-300 italic">"{selectedCard.reversed}"</p></div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
-              )}
-            </div>
+            );
+        };
 
-            {spread.length > 0 && (
-              <div className="flex justify-center">
-                <button 
-                  onClick={drawSpread}
-                  className="px-6 py-2 border border-amber-600 text-amber-500 rounded-full hover:bg-amber-600 hover:text-white transition-all text-sm uppercase tracking-widest font-bold"
-                >
-                  Clear & Redraw
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Deck Gallery View */}
-        {view === 'deck' && (
-          <div className="space-y-8 animate-in fade-in duration-500">
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-amber-900/20 pb-6">
-              <div>
-                <h2 className="text-4xl font-serif font-bold text-amber-200">The Sacred Deck</h2>
-                <p className="text-slate-400">78 cards including Major and Minor Arcana</p>
-              </div>
-              <div className="flex items-center gap-2 bg-slate-900 rounded-lg p-1 border border-white/5">
-                <button className="px-3 py-1 bg-amber-600 text-white rounded text-xs">All</button>
-                <button className="px-3 py-1 hover:bg-slate-800 text-slate-400 text-xs transition-colors">Major</button>
-                <button className="px-3 py-1 hover:bg-slate-800 text-slate-400 text-xs transition-colors">Minor</button>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
-              {TAROT_DECK.map(card => (
-                <div key={card.id} className="flex flex-col items-center">
-                   <Card card={card} size="sm" onClick={() => setSelectedCard(card)} />
-                   <span className="text-[10px] text-slate-500 mt-2 text-center uppercase tracking-tighter truncate w-full px-2">
-                     {card.name}
-                   </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </main>
-
-      {/* Card Detail Modal */}
-      {selectedCard && (
-        <div 
-          className="fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-6 animate-in fade-in duration-300"
-          onClick={() => setSelectedCard(null)}
-        >
-          <div 
-            className="bg-indigo-950 border border-amber-400/30 rounded-3xl p-8 max-w-2xl w-full shadow-2xl relative overflow-hidden flex flex-col md:flex-row gap-8"
-            onClick={e => e.stopPropagation()}
-          >
-            {/* Decoration */}
-            <div className="absolute top-0 right-0 p-12 opacity-10 pointer-events-none">
-              <Eye size={200} className="text-amber-200" />
-            </div>
-
-            <div className="flex-shrink-0 flex flex-col items-center">
-              <div className={`w-48 h-80 rounded-2xl bg-gradient-to-br from-indigo-900 to-purple-900 border-2 border-amber-400/40 flex flex-col items-center justify-center p-6 text-center shadow-xl ${selectedCard.isReversed ? 'rotate-180' : ''}`}>
-                <div className="text-6xl mb-6">{selectedCard.img}</div>
-                <h3 className="text-2xl font-serif font-bold text-amber-200">{selectedCard.name}</h3>
-                <p className="text-xs text-amber-400/60 uppercase mt-2 tracking-widest">{selectedCard.arcana}</p>
-              </div>
-              <button 
-                onClick={() => setSelectedCard(null)}
-                className="mt-6 w-full py-2 bg-slate-900 hover:bg-slate-800 rounded-lg text-sm text-slate-400 transition-colors"
-              >
-                Close
-              </button>
-            </div>
-
-            <div className="flex-grow space-y-6">
-              <div>
-                <h4 className="text-amber-100 font-bold uppercase text-xs tracking-widest mb-2 flex items-center gap-2">
-                  <span className="w-2 h-2 bg-emerald-400 rounded-full"></span> Upright Meaning
-                </h4>
-                <p className="text-slate-300 leading-relaxed text-lg italic">"{selectedCard.upright}"</p>
-              </div>
-              <div>
-                <h4 className="text-amber-100 font-bold uppercase text-xs tracking-widest mb-2 flex items-center gap-2">
-                  <span className="w-2 h-2 bg-rose-400 rounded-full"></span> Reversed Meaning
-                </h4>
-                <p className="text-slate-300 leading-relaxed text-lg italic">"{selectedCard.reversed}"</p>
-              </div>
-              <div className="pt-4 border-t border-white/10">
-                <p className="text-xs text-slate-500 leading-relaxed italic">
-                  The {selectedCard.name} is a powerful archetype of the {selectedCard.arcana} Arcana. 
-                  When drawn, it suggests a call to focus on {selectedCard.arcana === "Major" ? "spiritual growth and big picture themes" : `matters of the ${selectedCard.suit?.toLowerCase()} realm`}.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Footer Info */}
-      <footer className="py-12 text-center text-slate-600 text-xs border-t border-white/5 mx-6">
-        <p>© 2025 Tarot Oracle • Built with Insight and Intent</p>
-      </footer>
-    </div>
-  );
-};
-
-export default App;
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
