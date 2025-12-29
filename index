@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Aura Tarot - Essential Edition</title>
     
-    <!-- Professional Web Dependencies -->
+    <!-- React & Babel for Standalone Browser Support -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -17,35 +17,29 @@
         body { 
           font-family: 'Cormorant Garamond', serif; 
           margin: 0; 
-          background-color: #fcfcf7; /* Ivory Paper Tint */
+          background-color: #fcfcf7; 
           overflow-x: hidden;
           -webkit-font-smoothing: antialiased;
         }
         .font-sans { font-family: 'Montserrat', sans-serif; }
         
-        /* Mobile Scaling for ESSENTIAL title */
         @media (max-width: 400px) {
           .iPhoneTitle { 
-            font-size: 1.7rem !important; 
+            font-size: 1.65rem !important; 
             letter-spacing: 0.3em !important; 
             line-height: 1.2 !important; 
           }
         }
 
-        /* Essentialist Animations */
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in { animation: fadeIn 0.8s cubic-bezier(0.19, 1, 0.22, 1) forwards; }
         
         .momentum-scroll { -webkit-overflow-scrolling: touch; overflow-y: scroll; }
-        
-        /* Custom Scrollbar to match deck aesthetic */
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #d4af3744; border-radius: 10px; }
-        
         .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 
-        /* Sterling Ethos tactile effect */
         .silk-texture {
             background-image: url('https://www.transparenttextures.com/patterns/clean-gray-paper.png');
             background-repeat: repeat;
@@ -58,20 +52,21 @@
     <script type="text/babel">
         const { useState, useMemo, useEffect } = React;
 
-        const apiKey = ""; // Runtime provided key
+        // Note: The API key is injected by the environment. 
+        // To use this on your own site, you would need to insert a Gemini API key here.
+        const apiKey = ""; 
 
-        // Custom SVG Icons mimicking the Essential Tarot's geometric line-art
         const Icon = ({ name, size = 20, className = "" }) => {
-            const commonProps = { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.2", strokeLinecap: "round", strokeLinejoin: "round", className };
-            
-            if (name === "Sparkles") return <svg {...commonProps}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>;
-            if (name === "RefreshCw") return <svg {...commonProps}><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg>;
-            if (name === "Search") return <svg {...commonProps}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>;
-            if (name === "X") return <svg {...commonProps}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>;
-            if (name === "RotateCw") return <svg {...commonProps}><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>;
-            if (name === "Compass") return <svg {...commonProps}><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>;
-            if (name === "ChevronDown") return <svg {...commonProps}><path d="m6 9 6 6 6-6"/></svg>;
-            if (name === "CheckCircle") return <svg {...commonProps}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>;
+            const common = { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.2", strokeLinecap: "round", strokeLinejoin: "round", className };
+            if (name === "Sparkles") return <svg {...common}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>;
+            if (name === "RefreshCw") return <svg {...common}><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg>;
+            if (name === "Search") return <svg {...common}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>;
+            if (name === "X") return <svg {...common}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>;
+            if (name === "RotateCw") return <svg {...common}><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>;
+            if (name === "Compass") return <svg {...common}><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>;
+            if (name === "ChevronDown") return <svg {...common}><path d="m6 9 6 6 6-6"/></svg>;
+            if (name === "CheckCircle") return <svg {...common}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>;
+            if (name === "Star") return <svg {...common}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>;
             return null;
         };
 
@@ -133,34 +128,28 @@
                 };
             }, [searchQuery]);
 
-            const callGemini = async (prompt, retries = 5, delay = 1000) => {
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-                for (let i = 0; i < retries; i++) {
-                    try {
-                        const response = await fetch(url, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                contents: [{ parts: [{ text: prompt }] }],
-                                systemInstruction: { parts: [{ text: "You are a specialized Tarot reader for The Essential Tarot by Chloe Zarka Grinsnir. Poetic, minimalist, and insightful. Always conclude with TAGLINE: [phrase]." }] }
-                            })
-                        });
-                        if (!response.ok) throw new Error("API Connection Failed");
-                        const data = await response.json();
-                        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                        if (!text) throw new Error("Empty Reading");
-                        return text;
-                    } catch (err) {
-                        if (i === retries - 1) throw err;
-                        await new Promise(r => setTimeout(r, delay * Math.pow(2, i)));
-                    }
+            const callGemini = async (prompt, retries = 3) => {
+                if (!apiKey) {
+                    throw new Error("Missing API Key. This app requires a Gemini API Key to generate readings outside of the preview environment.");
                 }
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }],
+                        systemInstruction: { parts: [{ text: "You are an expert Tarot reader for The Essential Tarot by Chloe Zarka Grinsnir. Poetic, minimalist. End with TAGLINE: [phrase]." }] }
+                    })
+                });
+                if (!response.ok) throw new Error("API call failed.");
+                const data = await response.json();
+                return data.candidates[0].content.parts[0].text;
             };
 
             const generateReading = async (cards) => {
                 setIsLoading(true); setReading(""); setError(null);
                 const cardDetails = cards.map(c => `${c.name} (${c.isReversed ? 'Reversed' : 'Upright'})`).join(', ');
-                const prompt = `Querent Sign: ${userZodiac}. Mirror Spread: ${cardDetails}. Deck Style: Minimalist Essential Tarot. Provide a 3-paragraph professional psychological interpretation. End with TAGLINE: [phrase from list].`;
+                const prompt = `Querent: ${userZodiac}. Cards: ${cardDetails}. Professional 3-paragraph reading for Essential Tarot. End with TAGLINE: [phrase from list].`;
                 
                 try {
                     const result = await callGemini(prompt);
@@ -170,11 +159,11 @@
                         setActiveTagline(result.substring(tagIdx + 8).trim());
                     } else {
                         setReading(result.trim());
-                        setActiveTagline(TAGLINE_OPTIONS[Math.floor(Math.random() * TAGLINE_OPTIONS.length)]);
+                        setActiveTagline(TAGLINE_OPTIONS[0]);
                     }
                     setTimeout(() => document.getElementById('reading-display')?.scrollIntoView({ behavior: 'smooth' }), 300);
                 } catch (err) { 
-                    setError("The spirits are currently whispering in shadows. Please try synthesizing your spread once more."); 
+                    setError(err.message || "Connection failed. Please try again."); 
                 } finally { setIsLoading(false); }
             };
 
@@ -199,27 +188,19 @@
                 }
             };
 
-            const selectFromLibrary = (card) => {
-                if (manualSelection.some((c, idx) => idx !== activePickerSlot && c?.name === card.name)) return;
-                const next = [...manualSelection];
-                next[activePickerSlot] = { ...card, isReversed: false, id: Math.random().toString(36).substr(2, 9) };
-                setManualSelection(next);
-                setIsPickerOpen(false);
-            };
-
             return (
                 <div className="min-h-screen bg-[#fcfcf7] silk-texture text-zinc-900 font-serif pb-24 px-5 pt-8 text-center touch-pan-y">
                     <header className="mb-10 border-b border-zinc-100 pb-10 max-w-md mx-auto">
                         <div className="flex justify-center mb-3">
                              <div className="w-12 h-[1px] bg-zinc-200 mt-2 mr-3" />
-                             <div className="w-1 h-1 rounded-full bg-amber-500 mt-1.5 animate-pulse" />
+                             <div className="w-1 h-1 rounded-full bg-amber-500 mt-1.5" />
                              <div className="w-12 h-[1px] bg-zinc-200 mt-2 ml-3" />
                         </div>
                         <h1 className="text-3xl sm:text-5xl font-extralight tracking-[0.45em] text-zinc-900 mb-2 iPhoneTitle whitespace-nowrap overflow-hidden">ESSENTIAL</h1>
-                        <p className="text-[9px] tracking-[0.3em] text-zinc-400 uppercase font-sans font-bold mb-8">Sterling Ethos Edition</p>
+                        <p className="text-[9px] tracking-[0.3em] text-zinc-400 uppercase font-sans font-bold mb-8 tracking-widest">Chloe Zarka Grinsnir</p>
                         
                         <div className="inline-flex items-center gap-3 px-6 py-2 bg-white border border-zinc-100 rounded-full shadow-sm">
-                            <span className="text-[9px] uppercase font-sans font-bold text-zinc-400">Querent:</span>
+                            <span className="text-[9px] uppercase font-sans font-bold text-zinc-400">Sign:</span>
                             <div className="relative flex items-center">
                                 <select value={userZodiac} onChange={(e) => setUserZodiac(e.target.value)} className="appearance-none bg-transparent pr-6 text-xs font-bold uppercase outline-none cursor-pointer font-sans tracking-widest text-zinc-800">
                                     {ZODIAC_SIGNS.map(s => <option key={s} value={s}>{s}</option>)}
@@ -231,15 +212,15 @@
 
                     <nav className="flex justify-center mb-12 max-w-md mx-auto">
                         <div className="bg-zinc-100 p-1 rounded-full flex w-full max-w-[260px] border border-zinc-200/50 shadow-inner">
-                            <button onClick={() => { setSelectionMode('random'); setReading(""); setDrawnCards([]); }} className={`flex-1 py-2.5 rounded-full text-[10px] uppercase font-bold tracking-widest transition-all duration-300 ${selectionMode === 'random' ? 'bg-zinc-900 text-white shadow-lg scale-[1.02]' : 'text-zinc-500'}`}>Random</button>
-                            <button onClick={() => { setSelectionMode('manual'); setReading(""); setDrawnCards([]); }} className={`flex-1 py-2.5 rounded-full text-[10px] uppercase font-bold tracking-widest transition-all duration-300 ${selectionMode === 'manual' ? 'bg-zinc-900 text-white shadow-lg scale-[1.02]' : 'text-zinc-500'}`}>Manual</button>
+                            <button onClick={() => { setSelectionMode('random'); setReading(""); setDrawnCards([]); }} className={`flex-1 py-2.5 rounded-full text-[10px] uppercase font-bold tracking-widest transition-all duration-300 ${selectionMode === 'random' ? 'bg-zinc-900 text-white shadow-lg' : 'text-zinc-500'}`}>Random</button>
+                            <button onClick={() => { setSelectionMode('manual'); setReading(""); setDrawnCards([]); }} className={`flex-1 py-2.5 rounded-full text-[10px] uppercase font-bold tracking-widest transition-all duration-300 ${selectionMode === 'manual' ? 'bg-zinc-900 text-white shadow-lg' : 'text-zinc-500'}`}>Manual</button>
                         </div>
                     </nav>
 
                     <section className="mb-14 max-w-md mx-auto relative">
                         {selectionMode === 'random' ? (
                             <button onClick={handleRandomDraw} disabled={isLoading} className="group relative px-14 py-5 bg-white border border-zinc-200 rounded-full flex items-center gap-4 shadow-xl active:scale-95 transition-all mx-auto">
-                                <Icon name="Compass" className={isLoading ? 'animate-spin text-amber-500' : 'text-amber-500'} />
+                                <Icon name="Compass" size={20} className={isLoading ? 'animate-spin text-amber-500' : 'text-amber-500'} />
                                 <span className="text-[11px] uppercase font-bold tracking-[0.25em] font-sans text-zinc-800">Invoke Oracle</span>
                             </button>
                         ) : (
@@ -257,7 +238,7 @@
                                                         </div>
                                                     ) : (
                                                         <div className="opacity-10 flex flex-col items-center">
-                                                            <div className="w-12 h-12 rounded-full border border-zinc-900 mb-4 opacity-40 flex items-center justify-center"><Icon name="Sparkles" size={24}/></div>
+                                                            <Icon name="Sparkles" size={24} className="mb-3" />
                                                             <span className="text-[8px] uppercase tracking-widest font-sans font-bold">Slot {idx+1}</span>
                                                         </div>
                                                     )}
@@ -308,7 +289,10 @@
                                     {[1,2,3].map(i => <div key={i} className="h-4 bg-zinc-100 rounded-full animate-pulse" style={{ width: `${80 + Math.random()*20}%` }} />)}
                                 </div>
                             ) : error ? (
-                                <div className="py-12 text-center text-red-400 text-xs font-bold uppercase tracking-widest leading-loose">{error}</div>
+                                <div className="py-12 text-center text-red-400 text-xs font-bold uppercase tracking-widest leading-loose">
+                                    {error}
+                                    <div className="mt-4 text-zinc-400 lowercase italic normal-case">Check console for key details if hosting externally.</div>
+                                </div>
                             ) : (
                                 <div className="space-y-10 text-zinc-800 text-xl font-light leading-relaxed first-letter:text-6xl first-letter:float-left first-letter:mr-4 first-letter:text-amber-500 first-letter:font-extralight first-letter:leading-none">
                                     {reading.split('\n').map((p,i) => p.trim() && <p key={i}>{p}</p>)}
@@ -327,7 +311,7 @@
                     )}
 
                     {isPickerOpen && (
-                        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-zinc-900/10 backdrop-blur-2xl animate-fade-in touch-none">
+                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-zinc-900/10 backdrop-blur-2xl animate-fade-in touch-none">
                             <div className="bg-[#fcfcf9] border border-white w-full max-w-lg h-[88vh] rounded-[3rem] overflow-hidden flex flex-col shadow-2xl touch-auto">
                                 <div className="p-8 border-b border-zinc-100 flex justify-between items-center bg-white/50 shrink-0">
                                     <div><h3 className="text-2xl font-light uppercase text-zinc-900 leading-tight">The Library</h3><p className="text-[9px] uppercase font-bold text-zinc-400 tracking-widest mt-1">Select for Mirror Slot {activePickerSlot + 1}</p></div>
@@ -346,7 +330,12 @@
                                                     {cards.map(c => {
                                                         const taken = manualSelection.some(ms => ms?.name === c.name);
                                                         return (
-                                                            <button key={c.name} disabled={taken} onClick={() => selectFromLibrary(c)} className={`aspect-[4/5] p-5 rounded-3xl border transition-all relative overflow-hidden flex flex-col justify-between group ${taken ? 'bg-zinc-100 opacity-20 cursor-not-allowed grayscale' : 'bg-white border-zinc-100 active:border-amber-400 shadow-sm active:scale-[0.98]'}`}>
+                                                            <button key={c.name} disabled={taken} onClick={() => {
+                                                                const n = [...manualSelection];
+                                                                n[activePickerSlot] = { ...c, isReversed: false, id: Math.random().toString(36).substr(2,9) };
+                                                                setManualSelection(n);
+                                                                setIsPickerOpen(false);
+                                                            }} className={`aspect-[4/5] p-5 rounded-3xl border transition-all relative overflow-hidden flex flex-col justify-between group ${taken ? 'bg-zinc-100 opacity-20 cursor-not-allowed grayscale' : 'bg-white border-zinc-100 active:border-amber-400 shadow-sm active:scale-[0.98]'}`}>
                                                                 <div className="opacity-30 group-hover:opacity-100 transition-opacity transform scale-[0.4] origin-top-left"><EssentialIcon type={c.suit === "Major" ? "Major" : c.suit} /></div>
                                                                 <div className="text-sm font-medium leading-tight text-zinc-800 font-sans">{c.name}</div>
                                                                 {taken && <div className="absolute inset-0 bg-white/20" />}
