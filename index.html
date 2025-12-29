@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Tarot Oracle</title>
+    <style>
+        :root {
+            --bg: #000000;
+            --card: #1c1c1e;
+            --blue: #007aff;
+            --gold: #ffd700;
+            --gray: #8e8e93;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            background-color: var(--bg);
+            color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        header {
+            position: fixed; top: 0; width: 100%; z-index: 100;
+            background: rgba(25, 25, 25, 0.9);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-bottom: 0.5px solid rgba(255, 255, 255, 0.1);
+            padding: 60px 20px 15px 20px; text-align: center;
+        }
+        header h1 { margin: 0; font-size: 17px; font-weight: 700; letter-spacing: 1px; }
+
+        nav {
+            position: fixed; bottom: 0; width: 100%; z-index: 100;
+            background: rgba(25, 25, 25, 0.9);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-top: 0.5px solid rgba(255, 255, 255, 0.1);
+            display: flex; justify-content: space-around;
+            padding: 10px 10px 35px 10px;
+        }
+        .tab { display: flex; flex-direction: column; align-items: center; color: var(--gray); font-size: 10px; font-weight: 600; cursor: pointer; }
+        .tab.active { color: var(--blue); }
+        .tab-icon { font-size: 24px; margin-bottom: 4px; }
+
+        /* View Control */
+        .view { display: none; height: 100vh; overflow-y: auto; padding: 120px 20px 150px 20px; -webkit-overflow-scrolling: touch; }
+        
+        /* HOME IS FORCED VISIBLE BY DEFAULT */
+        #view-home { display: block; }
+
+        .hero { text-align: center; padding-top: 40px; }
+        .orb { 
+            width: 90px; height: 90px; background: linear-gradient(135deg, #f59e0b, #d97706); 
+            border-radius: 22px; margin: 0 auto 30px auto; font-size: 50px; line-height: 90px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .btn {
+            background: var(--blue); color: white; border: none; width: 100%; max-width: 320px;
+            height: 54px; border-radius: 14px; font-size: 18px; font-weight: 700;
+            margin-top: 20px; cursor: pointer;
+        }
+        .btn:active { opacity: 0.5; }
+
+        .slot { margin-bottom: 40px; text-align: center; }
+        .slot-title { font-size: 11px; font-weight: 900; color: var(--gold); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 15px; }
+        .tarot-card {
+            width: 190px; height: 300px; background: linear-gradient(145deg, #2c2c2e, #1c1c1e);
+            border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); margin: 0 auto;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+        }
+        .tarot-card.rev { transform: rotate(180deg); }
+        .card-emoji { font-size: 70px; margin-bottom: 15px; }
+        .card-name { font-size: 18px; font-weight: 800; color: var(--gold); }
+        .meaning-text { color: var(--gray); font-size: 15px; margin-top: 20px; font-style: italic; line-height: 1.4; padding: 0 20px; }
+
+        #modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 200; display: none; align-items: flex-end; }
+        .sheet {
+            background: var(--card); width: 100%; border-radius: 25px 25px 0 0;
+            padding: 20px 20px 60px 20px; text-align: center;
+            transform: translateY(100%); transition: transform 0.4s cubic-bezier(0, 1, 0, 1);
+        }
+        .sheet.up { transform: translateY(0); }
+        .handle { width: 40px; height: 5px; background: #333; border-radius: 3px; margin: 0 auto 20px auto; }
+    </style>
+</head>
+<body>
+
+    <header><h1>TAROT ORACLE</h1></header>
+
+    <!-- HOME VIEW -->
+    <div id="view-home" class="view">
+        <div class="hero">
+            <div class="orb">🔮</div>
+            <h2 style="font-size: 34px; font-weight: 800; margin: 0 0 10px 0; letter-spacing: -1px;">Divine Guidance</h2>
+            <p style="color: var(--gray); font-size: 17px; margin-bottom: 40px; line-height: 1.3;">Seek clarity in the cards. The universe is ready to speak.</p>
+            <button class="btn" onclick="oracle.draw()">Begin Reading</button>
+        </div>
+    </div>
+
+    <!-- READING VIEW -->
+    <div id="view-reading" class="view">
+        <div id="reading-display"></div>
+        <div style="text-align: center;"><button class="btn" style="background: #2c2c2e;" onclick="oracle.draw()">New Spread</button></div>
+    </div>
+
+    <!-- LIBRARY VIEW -->
+    <div id="view-deck" class="view">
+        <div id="library-grid" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;"></div>
+    </div>
+
+    <!-- TAB BAR -->
+    <nav>
+        <div class="tab active" id="tab-home" onclick="oracle.nav('home')">
+            <span class="tab-icon">✨</span>
+            <span>Home</span>
+        </div>
+        <div class="tab" id="tab-reading" onclick="oracle.nav('reading')">
+            <span class="tab-icon">🔮</span>
+            <span>Reading</span>
+        </div>
+        <div class="tab" id="tab-deck" onclick="oracle.nav('deck')">
+            <span class="tab-icon">📖</span>
+            <span>Library</span>
+        </div>
+    </nav>
+
+    <!-- MODAL -->
+    <div id="modal" onclick="oracle.close()">
+        <div class="sheet" id="sheet" onclick="event.stopPropagation()">
+            <div class="handle"></div>
+            <div id="sheet-content"></div>
+            <button class="btn" style="background: #333; margin-top: 30px;" onclick="oracle.close()">Dismiss</button>
+        </div>
+    </div>
+
+    <script>
+        const CARDS = [
+            { n: "The Fool", i: "🃏", u: "New beginnings, optimism, trust.", r: "Recklessness, unnecessary risks." },
+            { n: "Magician", i: "🪄", u: "Manifestation, power, skill.", r: "Manipulation, poor planning." },
+            { n: "Priestess", i: "🌙", u: "Intuition, sacred knowledge.", r: "Secrets, hidden motives." },
+            { n: "Empress", i: "🌿", u: "Nature, abundance, growth.", r: "Creative block, dependence." },
+            { n: "Emperor", i: "👑", u: "Authority, structure, foundation.", r: "Domination, rigidity." },
+            { n: "Hierophant", i: "🏛️", u: "Tradition, spiritual wisdom.", r: "New beliefs, rebellion." },
+            { n: "Lovers", i: "❤️", u: "Love, harmony, choices.", r: "Self-love, disharmony." },
+            { n: "Chariot", i: "⚔️", u: "Direction, control, victory.", r: "Aggression, lack of will." },
+            { n: "Strength", i: "🦁", u: "Courage, persuasion, influence.", r: "Self-doubt, low energy." },
+            { n: "Hermit", i: "🏮", u: "Introspection, soul-searching.", r: "Isolation, withdrawal." },
+            { id: 10, n: "Wheel", i: "🎡", u: "Good luck, destiny, cycles.", r: "Bad luck, resistance." },
+            { id: 11, n: "Justice", i: "⚖️", u: "Truth, fairness, law.", r: "Unfairness, dishonesty." },
+            { id: 12, n: "Death", i: "💀", u: "Endings, transformation.", r: "Resistance to change." },
+            { id: 13, n: "Sun", i: "☀️", u: "Positivity, fun, warmth.", r: "Inner child, sadness." },
+            { id: 14, n: "World", i: "🌍", u: "Completion, travel.", r: "Seeking closure." }
+        ];
+
+        const oracle = {
+            nav(id) {
+                // Remove active classes
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
+                
+                // Add active classes
+                const tab = document.getElementById('tab-' + id);
+                const view = document.getElementById('view-' + id);
+                if (tab) tab.classList.add('active');
+                if (view) view.style.display = 'block';
+
+                if(id === 'deck') this.renderLibrary();
+            },
+            draw() {
+                const display = document.getElementById('reading-display');
+                const spread = [...CARDS].sort(() => Math.random() - 0.5).slice(0, 3);
+                display.innerHTML = spread.map((c, idx) => {
+                    const isRev = Math.random() > 0.7;
+                    return `
+                        <div class="slot">
+                            <div class="slot-title">${['Past', 'Present', 'Future'][idx]}</div>
+                            <div class="tarot-card ${isRev ? 'rev' : ''}" onclick="oracle.open('${c.n}','${c.i}','${c.u}','${c.r}',${isRev})">
+                                <div class="card-emoji">${c.i}</div>
+                                <div class="card-name">${c.n}</div>
+                            </div>
+                            <div class="meaning-text">"${isRev ? c.r : c.u}"</div>
+                        </div>
+                    `;
+                }).join('');
+                this.nav('reading');
+            },
+            renderLibrary() {
+                const grid = document.getElementById('library-grid');
+                grid.innerHTML = CARDS.map(c => `
+                    <div style="background:#1c1c1e; border-radius:15px; padding:15px 5px; text-align:center; border:1px solid #333;" onclick="oracle.open('${c.n}','${c.i}','${c.u}','${c.r}',false)">
+                        <div style="font-size:30px; margin-bottom:5px;">${c.i}</div>
+                        <div style="font-size:9px; color:#888; font-weight:800; text-transform:uppercase;">${c.n}</div>
+                    </div>
+                `).join('');
+            },
+            open(n, i, u, r, isRev) {
+                document.getElementById('sheet-content').innerHTML = `
+                    <div class="orb" style="background:#2c2c2e; margin-bottom:20px;">${i}</div>
+                    <h2 style="margin:0; font-size:24px;">${n}</h2>
+                    <p style="color:var(--gold); font-size:12px; font-weight:900; margin-bottom:25px;">${isRev ? 'REVERSED' : 'UPRIGHT'}</p>
+                    <div style="text-align:left;">
+                        <p style="color:var(--blue); font-size:11px; font-weight:900; margin-bottom:5px;">UPRIGHT</p>
+                        <p style="margin-bottom:20px; font-size:16px;">${u}</p>
+                        <p style="color:#ff3b30; font-size:11px; font-weight:900; margin-bottom:5px;">REVERSED</p>
+                        <p style="font-size:16px;">${r}</p>
+                    </div>
+                `;
+                document.getElementById('modal').style.display = 'flex';
+                setTimeout(() => document.getElementById('sheet').classList.add('up'), 10);
+            },
+            close() {
+                document.getElementById('sheet').classList.remove('up');
+                setTimeout(() => document.getElementById('modal').style.display = 'none', 300);
+            }
+        };
+
+        // --- THE IGNITION ---
+        window.addEventListener('load', () => {
+            oracle.nav('home');
+        });
+    </script>
+</body>
+</html>
