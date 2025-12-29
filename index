@@ -4,73 +4,93 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tarot Oracle</title>
-    <!-- React and ReactDOM CDNs -->
-    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <!-- Babel for JSX transpilation -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap');
+        
+        :root {
+            --gold: #fbbf24;
+            --indigo-deep: #1e1b4b;
+        }
+
+        body {
+            background-color: #020617;
+            color: #f1f5f9;
+            font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
         .font-serif { font-family: 'Cinzel', serif; }
-        .perspective-1000 { perspective: 1000px; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes zoomIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-        .animate-in { animation: fadeIn 0.5s ease-out forwards; }
-        .zoom-in { animation: zoomIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        body { margin: 0; padding: 0; overflow-x: hidden; }
+        
+        /* Perspective for card flips */
+        .perspective { perspective: 1000px; }
+        
+        /* Custom Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes cardEntrance {
+            from { opacity: 0; transform: scale(0.8) translateY(30px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .animate-fade { animation: fadeIn 0.6s ease-out forwards; }
+        .animate-card { animation: cardEntrance 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        .animate-spin-custom { animation: spin 1s linear infinite; }
+
+        /* Card Styling */
+        .tarot-card-inner {
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+
+        .reversed { transform: rotate(180deg); }
+
+        .glow-hover:hover {
+            box-shadow: 0 0 20px rgba(251, 191, 36, 0.2);
+            border-color: rgba(251, 191, 36, 0.5);
+        }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-100">
-    <div id="root"></div>
+<body>
 
-    <script type="text/babel">
-        const { useState, useEffect, useMemo, Fragment } = React;
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full z-50 bg-slate-950/80 backdrop-blur-md border-b border-amber-900/20 px-6 py-4 flex justify-between items-center">
+        <div class="flex items-center gap-2 cursor-pointer" onclick="router.go('home')">
+            <div class="p-2 bg-amber-600 rounded-lg shadow-lg">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+            </div>
+            <span class="text-xl font-serif font-bold tracking-tight text-amber-100">Tarot Oracle</span>
+        </div>
+        <div class="flex gap-4 sm:gap-6">
+            <button onclick="router.go('reading')" class="text-sm font-medium text-slate-400 hover:text-amber-400 transition-colors flex items-center gap-1">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                <span class="hidden sm:inline">Reading</span>
+            </button>
+            <button onclick="router.go('deck')" class="text-sm font-medium text-slate-400 hover:text-amber-400 transition-colors flex items-center gap-1">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                <span class="hidden sm:inline">The Deck</span>
+            </button>
+        </div>
+    </nav>
 
-        // --- Custom SVG Icons (Using explicit React.Fragment for maximum compatibility) ---
-        const Icon = ({ name, size = 24, className = "" }) => {
-            const icons = {
-                shuffle: (
-                    <path d="M2 18L6 14M2 6L22 18M22 6L16 10M12 12L22 18M12 12L6 14M2 18L10 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                ),
-                info: (
-                    <Fragment>
-                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
-                        <path d="M12 16v-4" stroke="currentColor" strokeWidth="2"/>
-                        <path d="M12 8h.01" stroke="currentColor" strokeWidth="2"/>
-                    </Fragment>
-                ),
-                layout: (
-                    <Fragment>
-                        <rect x="3" y="3" width="7" height="7" stroke="currentColor" strokeWidth="2"/>
-                        <rect x="14" y="3" width="7" height="7" stroke="currentColor" strokeWidth="2"/>
-                        <rect x="14" y="14" width="7" height="7" stroke="currentColor" strokeWidth="2"/>
-                        <rect x="3" y="14" width="7" height="7" stroke="currentColor" strokeWidth="2"/>
-                    </Fragment>
-                ),
-                eye: (
-                    <Fragment>
-                        <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" stroke="currentColor" strokeWidth="2"/>
-                        <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2"/>
-                    </Fragment>
-                ),
-                rotate: (
-                    <Fragment>
-                        <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.85.83 6.72 2.24" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                        <path d="M21 3v5h-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                    </Fragment>
-                )
-            };
-            
-            return (
-                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
-                    {icons[name] || null}
-                </svg>
-            );
-        };
+    <!-- App Container -->
+    <main id="app" class="pt-24 pb-12 px-6 max-w-6xl mx-auto min-h-screen"></main>
 
-        // --- Tarot Deck Data ---
+    <!-- Modal Overlay -->
+    <div id="modal" class="fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-xl hidden items-center justify-center p-6 animate-fade"></div>
+
+    <script>
+        // --- Data ---
         const TAROT_DECK = [
             { id: 0, name: "The Fool", arcana: "Major", img: "🃏", upright: "New beginnings, optimism, trust in life.", reversed: "Recklessness, risk-taking, consideration." },
             { id: 1, name: "The Magician", arcana: "Major", img: "🪄", upright: "Action, power, manifestation.", reversed: "Manipulation, poor planning, untapped talents." },
@@ -93,178 +113,225 @@
             { id: 18, name: "The Moon", arcana: "Major", img: "🌒", upright: "Illusion, fear, anxiety, subconscious, intuition.", reversed: "Release of fear, repressed emotion, inner confusion." },
             { id: 19, name: "The Sun", arcana: "Major", img: "☀️", upright: "Positivity, fun, warmth, success, vitality.", reversed: "Inner child, feeling down, overly optimistic." },
             { id: 20, name: "Judgement", arcana: "Major", img: "🎺", upright: "Judgement, rebirth, inner calling, absolution.", reversed: "Self-doubt, inner-critic, ignoring the call." },
-            { id: 21, name: "The World", arcana: "Major", img: "🌍", upright: "Completion, integration, accomplishment, travel.", reversed: "Seeking personal closure, short-cuts, delays." },
-            // Minor Arcana (Generating the suits dynamically)
-            ...["Wands", "Cups", "Swords", "Pentacles"].flatMap((suit, suitIdx) => 
-                ["Ace", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Page", "Knight", "Queen", "King"].map((rank, rankIdx) => ({
+            { id: 21, name: "The World", arcana: "Major", img: "🌍", upright: "Completion, integration, accomplishment, travel.", reversed: "Seeking personal closure, short-cuts, delays." }
+        ];
+
+        // Minor Arcana Generation
+        ["Wands", "Cups", "Swords", "Pentacles"].forEach((suit, suitIdx) => {
+            ["Ace", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Page", "Knight", "Queen", "King"].forEach((rank, rankIdx) => {
+                TAROT_DECK.push({
                     id: 22 + (suitIdx * 14) + rankIdx,
                     name: `${rank} of ${suit}`,
                     arcana: "Minor",
                     suit: suit,
                     img: suit === "Wands" ? "🔥" : suit === "Cups" ? "💧" : suit === "Swords" ? "💨" : "⛰️",
-                    upright: `${rank} of ${suit} represents ${suit === "Wands" ? "energy" : suit === "Cups" ? "emotion" : suit === "Swords" ? "intellect" : "finance"} in an active state.`,
-                    reversed: `The reversed ${rank} of ${suit} suggests blocked energy regarding ${suit.toLowerCase()}.`
-                }))
-            )
-        ];
+                    upright: `${rank} of ${suit} represents ${suit.toLowerCase()} energy in an active, positive state.`,
+                    reversed: `The reversed ${rank} of ${suit} suggests blocked or internal struggles regarding ${suit.toLowerCase()}.`
+                });
+            });
+        });
 
-        const App = () => {
-            const [view, setView] = useState('home');
-            const [spread, setSpread] = useState([]);
-            const [isShuffling, setIsShuffling] = useState(false);
-            const [selectedCard, setSelectedCard] = useState(null);
+        // --- Router & State ---
+        const router = {
+            currentView: 'home',
+            spread: [],
+            isShuffling: false,
 
-            const drawSpread = () => {
-                setIsShuffling(true);
-                // Simulate shuffling delay
+            go(view) {
+                this.currentView = view;
+                this.render();
+                window.scrollTo(0, 0);
+            },
+
+            render() {
+                const app = document.getElementById('app');
+                app.innerHTML = '';
+                
+                if (this.currentView === 'home') app.appendChild(this.viewHome());
+                else if (this.currentView === 'reading') app.appendChild(this.viewReading());
+                else if (this.currentView === 'deck') app.appendChild(this.viewDeck());
+            },
+
+            // --- Views ---
+            viewHome() {
+                const container = document.createElement('div');
+                container.className = 'flex flex-col items-center text-center mt-12 sm:mt-24 space-y-8 animate-fade';
+                container.innerHTML = `
+                    <h1 class="text-5xl sm:text-7xl font-serif font-bold text-transparent bg-clip-text bg-gradient-to-b from-amber-100 to-amber-500 leading-tight">
+                        Seek Ancient Wisdom
+                    </h1>
+                    <p class="text-slate-400 max-w-lg text-lg leading-relaxed">
+                        Step into the realm of intuition. Consult the oracle for guidance on your past, present, and the path that lies ahead.
+                    </p>
+                    <div class="pt-4">
+                        <button onclick="router.drawSpread()" class="px-8 py-4 bg-amber-600 hover:bg-amber-500 text-white rounded-full font-bold shadow-xl transition-all flex items-center gap-2">
+                            <span id="shuffle-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 18L6 14M2 6L22 18M22 6L16 10M12 12L22 18M12 12L6 14M2 18L10 12"/></svg></span>
+                            Get a Reading
+                        </button>
+                    </div>
+                `;
+                return container;
+            },
+
+            viewReading() {
+                const container = document.createElement('div');
+                container.className = 'space-y-12 animate-fade';
+                
+                let spreadHtml = '';
+                if (this.spread.length > 0) {
+                    spreadHtml = `
+                        <div class="text-center">
+                            <h2 class="text-3xl font-serif font-bold text-amber-200">The Three Card Spread</h2>
+                            <p class="text-slate-500 mt-2">Past • Present • Future</p>
+                        </div>
+                        <div class="flex flex-wrap justify-center gap-8 py-8">
+                            ${this.spread.map((card, i) => `
+                                <div class="flex flex-col items-center space-y-6 animate-card" style="animation-delay: ${i * 200}ms">
+                                    <div class="text-amber-500 font-serif font-bold text-xl opacity-60">
+                                        ${i === 0 ? "The Past" : i === 1 ? "The Present" : "The Future"}
+                                    </div>
+                                    ${this.createCardHtml(card)}
+                                    <div class="max-w-[180px] text-center">
+                                        <p class="text-xs text-slate-400 italic leading-relaxed">
+                                            ${card.isReversed ? card.reversed : card.upright}
+                                        </p>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="flex justify-center">
+                            <button onclick="router.drawSpread()" class="px-6 py-2 border border-amber-600 text-amber-500 rounded-full hover:bg-amber-600 hover:text-white transition-all text-xs font-bold tracking-widest uppercase">
+                                Redraw Fate
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    spreadHtml = `
+                        <div class="flex flex-col items-center gap-12 mt-12">
+                             <div class="flex gap-4 opacity-20">
+                                <div class="w-32 h-48 border-2 border-dashed border-amber-500/30 rounded-xl"></div>
+                                <div class="w-32 h-48 border-2 border-dashed border-amber-500/30 rounded-xl"></div>
+                                <div class="w-32 h-48 border-2 border-dashed border-amber-500/30 rounded-xl"></div>
+                             </div>
+                             <button onclick="router.drawSpread()" class="px-8 py-4 bg-amber-600 text-white rounded-full font-bold flex items-center gap-2">
+                                Shuffle and Draw
+                             </button>
+                        </div>
+                    `;
+                }
+                
+                container.innerHTML = spreadHtml;
+                return container;
+            },
+
+            viewDeck() {
+                const container = document.createElement('div');
+                container.className = 'space-y-8 animate-fade';
+                container.innerHTML = `
+                    <div class="border-b border-amber-900/20 pb-6">
+                        <h2 class="text-4xl font-serif font-bold text-amber-200">The Sacred Deck</h2>
+                        <p class="text-slate-400">78 cards including Major and Minor Arcana</p>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-6">
+                        ${TAROT_DECK.map(card => `
+                            <div class="flex flex-col items-center scale-75 sm:scale-100">
+                                ${this.createCardHtml(card, true)}
+                                <span class="text-[10px] text-slate-500 mt-2 text-center uppercase tracking-tighter truncate w-full px-2">
+                                    ${card.name}
+                                </span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                return container;
+            },
+
+            // --- Helpers ---
+            createCardHtml(card, small = false) {
+                const sizeClasses = small ? 'w-24 h-40' : 'w-40 h-64';
+                const revClass = card.isReversed ? 'reversed' : '';
+                
+                return `
+                    <div onclick="router.showDetail(${card.id}, ${card.isReversed || false})" class="relative ${sizeClasses} cursor-pointer glow-hover rounded-xl transition-all duration-300">
+                        <div class="w-full h-full rounded-xl border-2 border-amber-900/30 bg-gradient-to-br from-indigo-950 to-purple-950 flex flex-col items-center justify-center p-4 text-center ${revClass}">
+                            <div class="${small ? 'text-2xl' : 'text-4xl'} mb-2">${card.img}</div>
+                            <h3 class="font-serif font-bold text-amber-200 leading-tight ${small ? 'text-[10px]' : 'text-sm'}">${card.name}</h3>
+                            <p class="text-[8px] text-amber-400/40 uppercase mt-1 tracking-widest">${card.arcana}</p>
+                        </div>
+                    </div>
+                `;
+            },
+
+            drawSpread() {
+                if (this.isShuffling) return;
+                this.isShuffling = true;
+                
+                // Visual feedback on button if on home
+                const btnIcon = document.getElementById('shuffle-icon');
+                if (btnIcon) btnIcon.classList.add('animate-spin-custom');
+
                 setTimeout(() => {
                     const shuffled = [...TAROT_DECK]
                         .sort(() => Math.random() - 0.5)
                         .slice(0, 3)
-                        .map(c => ({ ...c, isReversed: Math.random() > 0.3 })); // 30% chance for reversal
-                    setSpread(shuffled);
-                    setView('reading');
-                    setIsShuffling(false);
-                }, 800);
-            };
+                        .map(c => ({
+                            ...c,
+                            isReversed: Math.random() > 0.7
+                        }));
+                    
+                    this.spread = shuffled;
+                    this.isShuffling = false;
+                    this.go('reading');
+                }, 1000);
+            },
 
-            const Card = ({ card, size = "md", reveal = true, onClick }) => {
-                const isMd = size === "md";
-                return (
-                    <div 
-                        onClick={onClick}
-                        className={`relative transition-all duration-500 transform cursor-pointer
-                            ${isMd ? 'w-40 h-64' : 'w-24 h-40'} 
-                            ${card.isReversed && reveal ? 'rotate-180' : ''}
-                            perspective-1000`}
-                    >
-                        <div className={`w-full h-full rounded-xl shadow-2xl border-2 border-amber-900/30 flex flex-col items-center justify-center p-4 text-center overflow-hidden
-                            ${reveal ? 'bg-gradient-to-br from-indigo-900 to-purple-900' : 'bg-slate-900'}`}>
-                            {reveal ? (
-                                <Fragment>
-                                    <div className="text-4xl mb-4">{card.img}</div>
-                                    <h3 className={`font-serif font-bold text-amber-200 leading-tight ${isMd ? 'text-lg' : 'text-xs'}`}>{card.name}</h3>
-                                    <p className="text-[10px] text-amber-400/60 uppercase mt-1 tracking-widest">{card.arcana}</p>
-                                </Fragment>
-                            ) : (
-                                <div className="opacity-20"><Icon name="eye" size={48} className="text-amber-200" /></div>
-                            )}
+            showDetail(id, isReversed) {
+                const card = TAROT_DECK.find(c => c.id === id);
+                const modal = document.getElementById('modal');
+                
+                modal.innerHTML = `
+                    <div class="bg-indigo-950 border border-amber-400/30 rounded-3xl p-8 max-w-2xl w-full shadow-2xl flex flex-col md:flex-row gap-8 relative overflow-hidden" onclick="event.stopPropagation()">
+                        <div class="flex-shrink-0 flex flex-col items-center">
+                            <div class="w-48 h-80 rounded-2xl bg-gradient-to-br from-indigo-900 to-purple-900 border-2 border-amber-400/40 flex flex-col items-center justify-center p-6 text-center ${isReversed ? 'reversed' : ''}">
+                                <div class="text-6xl mb-6">${card.img}</div>
+                                <h3 class="text-2xl font-serif font-bold text-amber-200">${card.name}</h3>
+                                <p class="text-xs text-amber-400/60 uppercase mt-2 tracking-widest">${card.arcana}</p>
+                            </div>
+                            <button onclick="router.closeDetail()" class="mt-6 w-full py-2 bg-slate-900 hover:bg-slate-800 rounded-lg text-sm text-slate-400 transition-colors font-bold">CLOSE</button>
+                        </div>
+                        <div class="flex-grow space-y-6">
+                            <div>
+                                <h4 class="text-amber-100 font-bold uppercase text-xs tracking-widest mb-2 flex items-center gap-2">
+                                    <span class="w-2 h-2 bg-emerald-400 rounded-full"></span> Upright Meaning
+                                </h4>
+                                <p class="text-slate-300 leading-relaxed text-lg italic">"${card.upright}"</p>
+                            </div>
+                            <div>
+                                <h4 class="text-amber-100 font-bold uppercase text-xs tracking-widest mb-2 flex items-center gap-2">
+                                    <span class="w-2 h-2 bg-rose-400 rounded-full"></span> Reversed Meaning
+                                </h4>
+                                <p class="text-slate-300 leading-relaxed text-lg italic">"${card.reversed}"</p>
+                            </div>
                         </div>
                     </div>
-                );
-            };
+                `;
+                
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                
+                // Close on background click
+                modal.onclick = () => this.closeDetail();
+            },
 
-            return (
-                <div className="min-h-screen bg-slate-950 flex flex-col">
-                    <nav className="fixed top-0 w-full z-50 bg-slate-950/80 backdrop-blur-md border-b border-amber-900/20 px-6 py-4 flex justify-between items-center">
-                        <div className="flex items-center gap-2 cursor-pointer" onClick={() => setView('home')}>
-                            <div className="p-2 bg-amber-600 rounded-lg shadow-lg"><Icon name="eye" size={20} className="text-white" /></div>
-                            <span className="text-xl font-serif font-bold text-amber-100">Tarot Oracle</span>
-                        </div>
-                        <div className="flex gap-4 sm:gap-6">
-                            <button onClick={() => setView('reading')} className={`text-sm flex items-center gap-1 font-medium transition-colors ${view === 'reading' ? 'text-amber-400' : 'text-slate-400 hover:text-slate-200'}`}>
-                                <Icon name="layout" size={16} /> <span className="hidden sm:inline">Reading</span>
-                            </button>
-                            <button onClick={() => setView('deck')} className={`text-sm flex items-center gap-1 font-medium transition-colors ${view === 'deck' ? 'text-amber-400' : 'text-slate-400 hover:text-slate-200'}`}>
-                                <Icon name="info" size={16} /> <span className="hidden sm:inline">The Deck</span>
-                            </button>
-                        </div>
-                    </nav>
-
-                    <main className="flex-grow pt-24 pb-12 px-6 max-w-6xl mx-auto w-full">
-                        {view === 'home' && (
-                            <div className="flex flex-col items-center text-center mt-12 sm:mt-24 space-y-8 animate-in">
-                                <h1 className="text-5xl sm:text-7xl font-serif font-bold text-transparent bg-clip-text bg-gradient-to-b from-amber-100 to-amber-500 leading-tight">
-                                    Seek Ancient Wisdom
-                                </h1>
-                                <p className="text-slate-400 max-w-lg text-lg">Consult the oracle for guidance on your past, present, and future path.</p>
-                                <button onClick={drawSpread} className="px-8 py-4 bg-amber-600 hover:bg-amber-500 rounded-full font-bold flex items-center gap-2 transition-all shadow-xl shadow-amber-950/20 active:scale-95">
-                                    {isShuffling ? <Icon name="rotate" className="animate-spin" /> : <Icon name="shuffle" />} Get a Reading
-                                </button>
-                            </div>
-                        )}
-
-                        {view === 'reading' && (
-                            <div className="space-y-12 animate-in text-center">
-                                <div className="space-y-2">
-                                    <h2 className="text-3xl font-serif font-bold text-amber-200">The Three Card Spread</h2>
-                                    <p className="text-slate-500 text-sm italic">Click a card for deeper insight</p>
-                                </div>
-                                <div className="flex flex-wrap justify-center gap-8 py-8">
-                                    {spread.map((card, i) => (
-                                        <div key={i} className="flex flex-col items-center space-y-6 zoom-in" style={{ animationDelay: `${i * 150}ms` }}>
-                                            <div className="text-amber-500 font-serif font-bold text-xl opacity-60">
-                                                {i === 0 ? "Past" : i === 1 ? "Present" : "Future"}
-                                            </div>
-                                            <Card card={card} onClick={() => setSelectedCard(card)} />
-                                            <p className="max-w-[180px] text-xs text-slate-300 italic leading-relaxed">
-                                                {card.isReversed ? card.reversed : card.upright}
-                                            </p>
-                                        </div>
-                                    ))}
-                                </div>
-                                <button onClick={drawSpread} className="px-6 py-2 border border-amber-600 text-amber-500 rounded-full uppercase text-xs font-bold tracking-widest hover:bg-amber-600 hover:text-white transition-all active:scale-95">Redraw Spread</button>
-                            </div>
-                        )}
-
-                        {view === 'deck' && (
-                            <div className="space-y-8 animate-in">
-                                <div className="border-b border-amber-900/20 pb-4">
-                                    <h2 className="text-4xl font-serif font-bold text-amber-200">The Sacred Deck</h2>
-                                    <p className="text-slate-500 text-sm mt-1">Explore all 78 cards of the Great Oracle</p>
-                                </div>
-                                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-6">
-                                    {TAROT_DECK.map(card => (
-                                        <div key={card.id} className="flex flex-col items-center">
-                                            <Card card={card} size="sm" onClick={() => setSelectedCard(card)} />
-                                            <span className="text-[10px] text-slate-500 mt-2 text-center uppercase truncate w-full px-2">{card.name}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </main>
-
-                    {selectedCard && (
-                        <div className="fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-6 animate-in" onClick={() => setSelectedCard(null)}>
-                            <div className="bg-indigo-950 border border-amber-400/30 rounded-3xl p-8 max-w-2xl w-full flex flex-col md:flex-row gap-8 relative shadow-2xl" onClick={e => e.stopPropagation()}>
-                                <div className="flex-shrink-0 flex flex-col items-center">
-                                    <div className={`w-48 h-80 rounded-2xl bg-gradient-to-br from-indigo-900 to-purple-900 border-2 border-amber-400/40 flex flex-col items-center justify-center p-6 text-center shadow-lg ${selectedCard.isReversed ? 'rotate-180' : ''}`}>
-                                        <div className="text-6xl mb-6">{selectedCard.img}</div>
-                                        <h3 className="text-2xl font-serif font-bold text-amber-200">{selectedCard.name}</h3>
-                                        <p className="text-xs text-amber-400/50 uppercase mt-2 tracking-tighter">{selectedCard.arcana} Arcana</p>
-                                    </div>
-                                    <button onClick={() => setSelectedCard(null)} className="mt-6 w-full py-2 bg-slate-900 hover:bg-slate-800 transition-colors rounded-lg text-sm text-slate-400 font-medium">Close Oracle</button>
-                                </div>
-                                <div className="flex-grow space-y-6 pt-4">
-                                    <div>
-                                        <h4 className="text-amber-100 font-bold uppercase text-[10px] tracking-widest mb-2 flex items-center gap-2">
-                                            <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span> Upright Meaning
-                                        </h4>
-                                        <p className="text-slate-300 italic text-lg font-light leading-relaxed">"{selectedCard.upright}"</p>
-                                    </div>
-                                    <div className="pt-4 border-t border-white/5">
-                                        <h4 className="text-amber-100 font-bold uppercase text-[10px] tracking-widest mb-2 flex items-center gap-2">
-                                            <span className="w-1.5 h-1.5 bg-rose-500 rounded-full"></span> Reversed Meaning
-                                        </h4>
-                                        <p className="text-slate-300 italic text-lg font-light leading-relaxed">"{selectedCard.reversed}"</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    <footer className="py-8 text-center text-slate-700 text-[10px] uppercase tracking-[0.2em]">
-                        &copy; 2025 Tarot Oracle • Built with intent
-                    </footer>
-                </div>
-            );
+            closeDetail() {
+                const modal = document.getElementById('modal');
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
         };
 
-        // Initialize the app
-        const container = document.getElementById('root');
-        const root = ReactDOM.createRoot(container);
-        root.render(<App />);
+        // Initialize
+        window.onload = () => router.render();
     </script>
 </body>
 </html>
