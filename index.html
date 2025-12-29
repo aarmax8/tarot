@@ -46,32 +46,33 @@
             transform: rotateY(180deg);
         }
 
+        /* Front = Artwork, Back = Meaning */
         .card-front, .card-back {
             position: absolute;
             width: 100%;
             height: 100%;
             backface-visibility: hidden;
-            border-radius: 8px;
+            border-radius: 12px;
             border: 2.2px solid var(--gold);
             box-shadow: 0 15px 40px rgba(0,0,0,0.9);
             overflow: hidden;
         }
 
+        .card-front {
+            background: #000;
+            z-index: 2;
+        }
+
         .card-back {
             background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
-            z-index: 2;
+            transform: rotateY(180deg);
+            z-index: 1;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
-        .card-front {
-            background: #000;
-            transform: rotateY(180deg);
-            z-index: 1;
-        }
-
-        /* Fixed Orientation Layer to ensure reversed cards display art correctly */
+        /* Reversal logic */
         .orientation-layer {
             width: 100%;
             height: 100%;
@@ -112,7 +113,7 @@
 
     <!-- Header -->
     <header class="fixed top-0 w-full z-50 px-6 py-8 bg-slate-950/90 backdrop-blur-md border-b border-amber-900/30 text-center">
-        <h1 class="cinzel text-lg font-black tracking-[0.4em] text-amber-500 uppercase">The Essential Oracle</h1>
+        <h1 class="cinzel text-lg font-black tracking-[0.4em] text-amber-500 uppercase text-shadow-sm">The Essential Oracle</h1>
     </header>
 
     <!-- Navigation -->
@@ -131,14 +132,14 @@
         </button>
     </nav>
 
-    <!-- Main Views -->
+    <!-- Main Content -->
     <main class="pt-36 px-6 max-w-4xl mx-auto">
         
         <!-- View: Home -->
         <div id="view-home" class="view space-y-12 text-center animate-in fade-in duration-700">
             <div class="py-4">
                 <span class="text-7xl block mb-6 drop-shadow-[0_0_20px_rgba(212,175,55,0.4)]">❂</span>
-                <h2 class="cinzel text-4xl font-black tracking-widest text-white uppercase leading-tight">Your <br/>Living Path</h2>
+                <h2 class="cinzel text-4xl font-black tracking-widest text-white uppercase leading-tight">Living <br/>Alignment</h2>
             </div>
             
             <div class="max-w-xs mx-auto space-y-4">
@@ -155,12 +156,17 @@
             </div>
 
             <p class="text-slate-400 italic text-lg leading-relaxed px-4 max-w-md mx-auto">
-                "Life is a journey of constant movement. Align your Mind, Body, and Soul to find your rhythm for the day ahead."
+                "Alignment is the practice of intention. Harmonize your Mind, Body, and Soul to identify your rhythm for the day."
             </p>
 
-            <button onclick="app.draw()" class="w-full py-6 rounded-md cinzel font-black uppercase tracking-[0.3em] text-amber-500 border-2 border-amber-500 hover:bg-amber-500 hover:text-black transition-all shadow-[0_0_25px_rgba(212,175,55,0.2)]">
-                Seek New Alignment
-            </button>
+            <div class="flex flex-col gap-4 max-w-xs mx-auto">
+                <button onclick="app.draw('random')" class="w-full py-6 rounded-md cinzel font-black uppercase tracking-[0.3em] text-amber-500 border-2 border-amber-500 hover:bg-amber-500 hover:text-black transition-all shadow-[0_0_25px_rgba(212,175,55,0.2)]">
+                    Random Alignment
+                </button>
+                <button onclick="app.initManual()" class="w-full py-3 rounded-md cinzel font-bold uppercase tracking-[0.2em] text-slate-400 border border-slate-700 hover:text-white transition-all">
+                    Manual Selection
+                </button>
+            </div>
         </div>
 
         <!-- View: Reading -->
@@ -174,17 +180,20 @@
 
             <div id="outcome-container" class="hidden animate-in fade-in slide-in-from-bottom-10 duration-1000 pb-10"></div>
             
-            <div id="reset-button-container" class="hidden text-center">
-                <button onclick="app.draw()" class="text-amber-500 uppercase tracking-widest font-black text-[10px] border border-amber-500 px-8 py-3 rounded-md hover:bg-amber-500 hover:text-black transition-all shadow-lg">
-                    Reset Spread
+            <div id="reset-button-container" class="hidden text-center flex flex-col gap-4">
+                <button onclick="app.draw('random')" class="text-amber-500 uppercase tracking-widest font-black text-[10px] border border-amber-500 px-8 py-3 rounded-md hover:bg-amber-500 hover:text-black transition-all shadow-lg mx-auto">
+                    Reset Random Spread
+                </button>
+                <button onclick="app.initManual()" class="text-slate-500 uppercase tracking-widest font-bold text-[10px] hover:text-white transition-colors">
+                    Hand-Pick New Cards
                 </button>
             </div>
         </div>
 
-        <!-- View: Deck / Roster -->
+        <!-- View: Vault -->
         <div id="view-deck" class="view hidden">
-            <h2 class="cinzel text-xl text-amber-500 mb-8 tracking-[0.4em] text-center font-black uppercase">The Vault</h2>
-            <p class="text-slate-500 text-[10px] uppercase text-center mb-8 tracking-widest italic">Flip a card to reveal its life wisdom</p>
+            <h2 id="deck-view-title" class="cinzel text-xl text-amber-500 mb-2 tracking-[0.4em] text-center font-black uppercase">The Vault</h2>
+            <p id="deck-view-instruction" class="text-slate-500 text-[10px] uppercase text-center mb-8 tracking-widest italic font-medium">Flip a card to reveal its life wisdom</p>
             <div id="deck-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6 pb-24"></div>
         </div>
     </main>
@@ -196,7 +205,7 @@
             { id: 0, num: "0", name: "The Fool", prompt: "Highly detailed athletic tarot card. A rookie athlete silhouetted in a dark stadium tunnel looking out at a bright arena, cinematic lighting, gold border", u: "A new start in life. Have the courage to take a risk and trust your training. The day is wide open for you.", r: "You're rushing into a commitment. Slow down and scout the day ahead before you make your first move." },
             { id: 1, num: "I", name: "The Magician", prompt: "Highly detailed athletic tarot card. Star player orchestrating a play with glowing tactical holographic lines, focus, gold helmet", u: "You possess all the tools to manifest success today. Execute your plan with absolute confidence.", r: "Scattered focus. You're trying to do too many things at once; pick one goal for today and put your power behind it." },
             { id: 2, num: "II", name: "High Priestess", prompt: "Highly detailed athletic tarot card. Female athlete meditating in a zen dark room with neon blue lines, lunar cycle", u: "Trust your internal voice. Today's clarity will come from a place of quiet focus, not the noise of others.", r: "Ignoring your gut. You are listening to the crowd too much. Tune out the noise and trust what you feel." },
-            { id: 3, num: "III", name: "The Empress", prompt: "Highly detailed athletic tarot card. Team owner in a luxury box overlooking a lush green field, abundance", u: "A day of growth and abundance. Your hard work is finally yielding a deep, nurturing reward in your personal life.", r: "Creative stagnation. You're feeling uninspired; go back to basics to find your internal flow today." },
+            { id: 3, num: "III", name: "The Empress", prompt: "Highly detailed athletic tarot card. Team owner in a luxury box overlooking a lush green field, abundance", u: "A day of growth and abundance. Your efforts are yielding a deep reward in your personal life.", r: "Creative stagnation. You're feeling uninspired; go back to basics to find your internal flow today." },
             { id: 4, num: "IV", name: "The Emperor", prompt: "Highly detailed athletic tarot card. Head coach with a glowing championship ring, authority, structural geometry", u: "Strategy and discipline are your winning moves today. Be the leader of your own journey.", r: "Rigid thinking. You are trying to control variables you can't. Adapt to the circumstances as they unfold." },
             { id: 10, num: "X", name: "Wheel of Fortune", prompt: "Highly detailed athletic tarot card. Massive mechanical clockwork ring in a stadium, destiny", u: "The tides of your life are turning. A lucky break or a positive shift in momentum is manifesting today.", r: "Resisting change. You're fighting the natural flow of life's seasons. Adapt and go with the cycle." },
             { id: 13, num: "XIII", name: "Death", prompt: "Highly detailed athletic tarot card. Final whistle. Stadium lights dimming on empty field, single gold whistle on turf", u: "A cycle is concluding. Let the past go so you can prepare for a fresh chapter starting tomorrow.", r: "Clinging to a loss. The time has run out on this situation; accept it and start prepping for the next game." },
@@ -209,17 +218,15 @@
         const FULL_DECK = [...MAJOR_ARCANA];
         SUITS.forEach((suit, sIdx) => {
             const focus = suit === "Wands" ? "drive" : suit === "Cups" ? "heart" : suit === "Swords" ? "logic" : "finances";
-            const sport = suit === "Wands" ? "Sprint" : suit === "Cups" ? "Swimming" : suit === "Swords" ? "Fencing" : "Shotput";
-            const meaning = suit === "Wands" ? "passion and creative fire" : suit === "Cups" ? "emotional connections" : suit === "Swords" ? "mental clarity and truth" : "material security and physical health";
-            
+            const sport = suit === "Wands" ? "Sprint" : suit === "Cups" ? "Water Polo" : suit === "Swords" ? "Fencing" : "Shotput";
             RANKS.forEach((rank, rIdx) => {
                 FULL_DECK.push({
                     id: 100 + (sIdx * 14) + rIdx,
                     num: rank,
                     name: `${rank} of ${suit}`,
                     prompt: `Highly detailed athletic tarot card. Athlete doing ${sport} with ${suit} symbols, gold border, cinematic lighting`,
-                    u: `Today highlights your ${focus}. Expect progress and a sense of mastery regarding your ${meaning}.`,
-                    r: `You're feeling blocked regarding your ${focus}. Take a timeout today to rest and re-evaluate your ${meaning}.`
+                    u: `Today highlights your ${focus}. Expect progress and a sense of mastery regarding your current path.`,
+                    r: `You're feeling blocked regarding your ${focus}. Take a timeout today to rest and re-evaluate your stance.`
                 });
             });
         });
@@ -231,15 +238,35 @@
             spread: [],
             images: {},
             selectedZodiac: "Universal",
+            manualStep: 0, 
 
             nav(id) {
                 document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
                 const viewEl = document.getElementById('view-' + id);
                 if (viewEl) viewEl.classList.remove('hidden');
-                if (id === 'deck') this.renderDeck();
+                if (id === 'deck') {
+                    if (this.manualStep === 0) {
+                        document.getElementById('deck-view-title').innerText = "The Vault";
+                        document.getElementById('deck-view-instruction').innerText = "Flip a card to reveal its life wisdom";
+                    }
+                    this.renderDeck();
+                }
             },
 
-            async draw() {
+            initManual() {
+                this.manualStep = 1;
+                this.spread = [];
+                this.nav('deck');
+                document.getElementById('deck-view-title').innerText = "Manual Selection";
+                this.updateManualInstruction();
+            },
+
+            updateManualInstruction() {
+                const labels = ["", "Select a card for your MIND", "Select a card for your BODY", "Select a card for your SOUL"];
+                document.getElementById('deck-view-instruction').innerText = labels[this.manualStep];
+            },
+
+            async draw(type) {
                 const zodiacEl = document.getElementById('zodiac-input');
                 this.selectedZodiac = zodiacEl ? zodiacEl.value : "Universal";
                 
@@ -254,14 +281,18 @@
                 resetBtn.classList.add('hidden');
                 loader.classList.remove('hidden');
 
-                const pool = [...FULL_DECK];
-                this.spread = [];
-                for(let i=0; i<3; i++) {
-                    const idx = Math.floor(Math.random() * pool.length);
-                    const card = {...pool.splice(idx, 1)[0], isRev: Math.random() > 0.6, aspect: ['Mind', 'Body', 'Soul'][i], element: ['Air','Fire','Water'][i]};
-                    this.spread.push(card);
-                    this.renderCardSkeleton(card, i);
+                if (type === 'random') {
+                    const pool = [...FULL_DECK];
+                    this.spread = [];
+                    for(let i=0; i<3; i++) {
+                        const idx = Math.floor(Math.random() * pool.length);
+                        const card = {...pool.splice(idx, 1)[0], isRev: Math.random() > 0.6, aspect: ['Mind', 'Body', 'Soul'][i], element: ['Air','Fire','Water'][i]};
+                        this.spread.push(card);
+                    }
+                    this.manualStep = 0;
                 }
+
+                this.spread.forEach((c, i) => this.renderCardSkeleton(c, i));
 
                 await Promise.all(this.spread.map(async (c, i) => {
                     const img = await this.generateImage(c.prompt);
@@ -271,6 +302,7 @@
 
                 loader.classList.add('hidden');
                 resetBtn.classList.remove('hidden');
+                this.synthesize(); // Trigger synthesis automatically once images load
             },
 
             async generateImage(prompt) {
@@ -293,20 +325,18 @@
 
             renderCardSkeleton(card, i) {
                 const html = `
-                    <div class="flex flex-col items-center gap-4">
+                    <div class="flex flex-col items-center gap-4 animate-in fade-in duration-700">
                         <span class="cinzel text-[10px] tracking-[0.4em] text-slate-500 font-black uppercase">${card.aspect}</span>
-                        <div id="card-wrap-${i}" class="card-container" onclick="app.flipCard(this, ${i})">
+                        <div id="card-wrap-${i}" class="card-container" onclick="this.classList.toggle('flipped')">
                             <div class="card-inner">
-                                <div class="card-back">
-                                    <div class="w-full h-full border border-amber-500/20 m-1 flex items-center justify-center">
-                                        <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="0.8">
-                                            <circle cx="12" cy="12" r="8" stroke-dasharray="1 1" opacity="0.3" />
-                                            <circle cx="12" cy="12" r="4" stroke="var(--gold)" />
-                                        </svg>
-                                    </div>
-                                </div>
                                 <div id="card-front-${i}" class="card-front">
                                     <div class="w-full h-full shimmer"></div>
+                                </div>
+                                <div class="card-back">
+                                    <div class="p-6 text-center flex flex-col items-center justify-center h-full">
+                                        <span class="cinzel text-base text-amber-500 font-black uppercase mb-4 block border-b border-amber-900/40 pb-2 w-full">${card.name}</span>
+                                        <p class="text-base text-slate-200 italic font-medium leading-relaxed">${card.isRev ? card.r : card.u}</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -321,19 +351,18 @@
                 el.innerHTML = `
                     <div class="orientation-layer ${card.isRev ? 'is-reversed' : ''}">
                         <div class="relative w-full h-full">
-                            <img src="${imgSrc || 'https://via.placeholder.com/400x600/000/000?text=Wait+for+Signal'}" class="w-full h-full object-cover">
+                            <img src="${imgSrc || 'https://via.placeholder.com/400x600/020617/d4af37?text=Wait+for+Signal'}" class="w-full h-full object-cover">
                             <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60"></div>
                             
-                            <!-- Header Bar -->
-                            <div class="absolute top-0 w-full bg-black/60 backdrop-blur-md border-b border-amber-500/20 py-2 px-3 flex justify-between items-center z-30">
+                            <!-- Header Bar for Visibility -->
+                            <div class="absolute top-0 w-full bg-black/70 backdrop-blur-md border-b border-amber-500/20 py-2.5 px-3 flex justify-between items-center z-30">
                                 <div class="w-7 h-7 rounded-full border border-amber-400 bg-black/60 flex items-center justify-center">
                                     <span class="cinzel text-[10px] font-black text-amber-200">${card.num}</span>
                                 </div>
                                 <span class="cinzel font-black text-amber-200 text-sm drop-shadow-lg">${SIGILS[card.element] || '✧'}</span>
                             </div>
                             
-                            <!-- Bottom Title Bar -->
-                            <div class="absolute bottom-4 left-2 right-2 bg-black/90 border border-amber-500/40 py-2 text-center backdrop-blur-sm z-20 rounded">
+                            <div class="absolute bottom-4 left-2 right-2 bg-black/90 border border-amber-500/40 py-2 text-center backdrop-blur-sm z-20 rounded shadow-xl">
                                 <h3 class="cinzel text-[9px] font-black text-amber-400 tracking-[0.2em] uppercase truncate">${card.name}</h3>
                             </div>
                         </div>
@@ -341,10 +370,22 @@
                 `;
             },
 
-            flipCard(el, i) {
-                el.classList.add('flipped');
-                const allFlipped = document.querySelectorAll('.card-container.flipped').length;
-                if (allFlipped === 3) setTimeout(() => this.synthesize(), 800);
+            selectCardManual(cardId) {
+                if (this.manualStep === 0) return;
+                const card = {...FULL_DECK.find(c => c.id === cardId)};
+                card.aspect = ['Mind', 'Body', 'Soul'][this.manualStep - 1];
+                card.isRev = false;
+                card.element = ['Air','Fire','Water'][this.manualStep - 1];
+                this.spread.push(card);
+                
+                this.manualStep++;
+                if (this.manualStep > 3) {
+                    this.draw('manual');
+                    this.manualStep = 0;
+                } else {
+                    this.updateManualInstruction();
+                    this.renderDeck();
+                }
             },
 
             synthesize() {
@@ -354,27 +395,27 @@
                 let narrative = `
                     <div class="space-y-6">
                         <p class="text-xl italic leading-relaxed text-slate-200 border-b border-amber-900/30 pb-4">
-                            "The alignment for your day is set. Reflect on these pillars of your journey."
+                            "The alignment for your day is set. Reflect on these core pillars of your journey."
                         </p>
                         <div class="space-y-6 text-slate-300">
-                            <p><span class="text-amber-500 font-black uppercase text-[11px] tracking-widest block mb-1">Your Mind (Cognitive Strategy):</span> 
-                               With <strong>${mind.name}</strong> leading your thoughts, your mindset today is ${mind.isRev ? mind.r.toLowerCase() : mind.u.toLowerCase()}</p>
+                            <p><span class="text-amber-500 font-black uppercase text-[11px] tracking-widest block mb-1">Your Mind (Cognitive Focus):</span> 
+                               With <strong>${mind.name}</strong> as your mental guide, your thoughts today are ${mind.isRev ? mind.r.toLowerCase() : mind.u.toLowerCase()}</p>
                             
-                            <p><span class="text-amber-500 font-black uppercase text-[11px] tracking-widest block mb-1">Your Body (Active Energy):</span> 
-                               <strong>${body.name}</strong> shows that your physical path today is ${body.isRev ? body.r.toLowerCase() : body.u.toLowerCase()}</p>
+                            <p><span class="text-amber-500 font-black uppercase text-[11px] tracking-widest block mb-1">Your Body (Active Vitality):</span> 
+                               <strong>${body.name}</strong> indicates that your physical energy today is ${body.isRev ? body.r.toLowerCase() : body.u.toLowerCase()}</p>
                             
                             <p><span class="text-amber-500 font-black uppercase text-[11px] tracking-widest block mb-1">Your Soul (Deep Alignment):</span> 
-                               <strong>${soul.name}</strong> whispers that your core spirit for today is ${soul.isRev ? soul.r.toLowerCase() : soul.u.toLowerCase()}</p>
+                               <strong>${soul.name}</strong> whispers that your spiritual purpose for today is ${soul.isRev ? soul.r.toLowerCase() : soul.u.toLowerCase()}</p>
                         </div>
                     </div>
                 `;
 
-                const colors = { "Fire": ["Vitality Red", "#dc2626"], "Water": ["Calm Indigo", "#3b82f6"], "Air": ["Focus Silver", "#f8fafc"], "Earth": ["Foundational Gold", "#d4af37"], "Grit": ["Obsidian Shadow", "#1e293b"] };
-                const lucky = colors[userEl];
+                const colors = { "Fire": ["Victory Red", "#dc2626"], "Water": ["Clutch Blue", "#3b82f6"], "Air": ["Elite Silver", "#f8fafc"], "Earth": ["Champion Gold", "#d4af37"], "Grit": ["Obsidian Shadow", "#1e293b"] };
+                const lucky = colors[userEl] || ["Universal Light", "#ffffff"];
 
                 const out = document.getElementById('outcome-container');
                 out.innerHTML = `
-                    <div class="outcome-glass p-8 rounded-xl space-y-8 border border-amber-500/30">
+                    <div class="outcome-glass p-8 rounded-xl space-y-8 border border-amber-500/30 shadow-[0_0_50px_rgba(0,0,0,0.6)]">
                         <span class="cinzel text-[10px] tracking-[0.6em] text-amber-500 font-black block text-center uppercase">Daily Synthesis</span>
                         <div class="outcome-text">${narrative}</div>
                         <div class="flex items-center gap-6 p-4 bg-black/40 rounded-lg border border-white/5">
@@ -387,20 +428,23 @@
                     </div>
                 `;
                 out.classList.remove('hidden');
-                out.scrollIntoView({ behavior: 'smooth' });
+                // Auto-scroll removed as requested
             },
 
             renderDeck() {
                 const grid = document.getElementById('deck-grid');
                 grid.innerHTML = FULL_DECK.map(c => `
-                    <div class="card-container" onclick="this.classList.toggle('flipped')">
+                    <div class="card-container" onclick="${this.manualStep > 0 ? `app.selectCardManual(${c.id})` : `this.classList.toggle('flipped')`}">
                         <div class="card-inner">
                             <div class="card-front">
                                 <div class="relative w-full h-full">
-                                    <img src="${this.images[c.id] || 'https://via.placeholder.com/400x600/020617/d4af37?text=Scouting...'}" class="w-full h-full object-cover">
+                                    <img src="${this.images[c.id] || 'https://via.placeholder.com/400x600/020617/d4af37?text=Vault'}" class="w-full h-full object-cover">
                                     <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
-                                    <div class="absolute top-2 left-2 w-7 h-7 rounded-full border border-amber-500 flex items-center justify-center bg-black/40">
-                                        <span class="cinzel text-[10px] font-black text-amber-200">${c.num}</span>
+                                    <div class="absolute top-0 w-full bg-black/70 backdrop-blur-md border-b border-amber-500/20 py-2.5 px-3 flex justify-between items-center z-30">
+                                        <div class="w-7 h-7 rounded-full border border-amber-400 bg-black/60 flex items-center justify-center">
+                                            <span class="cinzel text-[10px] font-black text-amber-200">${c.num}</span>
+                                        </div>
+                                        <span class="cinzel font-black text-amber-200 text-sm drop-shadow-lg">${SIGILS[c.element] || '✧'}</span>
                                     </div>
                                     <div class="absolute bottom-3 w-full text-center">
                                         <span class="cinzel text-[8px] font-black text-amber-400 tracking-widest uppercase truncate px-1">${c.name}</span>
@@ -409,8 +453,8 @@
                             </div>
                             <div class="card-back">
                                 <div class="p-6 text-center flex flex-col items-center justify-center h-full">
-                                    <span class="cinzel text-[13px] text-amber-500 font-black uppercase mb-4 block border-b border-amber-900/40 pb-2 w-full">${c.name}</span>
-                                    <p class="text-[13px] text-slate-200 italic font-medium leading-relaxed">${c.u}</p>
+                                    <span class="cinzel text-base text-amber-500 font-black uppercase mb-4 block border-b border-amber-900/40 pb-2 w-full">${c.name}</span>
+                                    <p class="text-base text-slate-200 italic font-medium leading-relaxed">${c.u}</p>
                                     <div class="mt-8 opacity-10">
                                         <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1">
                                             <circle cx="12" cy="12" r="8" stroke-dasharray="1 1" />
@@ -425,7 +469,7 @@
         };
 
         window.addEventListener('DOMContentLoaded', () => {
-            app.draw();
+            app.draw('random');
         });
     </script>
 </body>
